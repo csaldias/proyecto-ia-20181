@@ -32,3 +32,5 @@
 *.app
 
 dataset/
+
+\.vscode/
