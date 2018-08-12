@@ -7,7 +7,9 @@ class Temperatura {
         float decay_factor;
     public:
         Temperatura(float _temp, float _decay_factor): temp(_temp), decay_factor(_decay_factor) {}
-        float get_temp(void);
+        float getTemp(void);
+        void coolDown(void);
+        void setTemp(float newTemp);
 };
 
 #endif

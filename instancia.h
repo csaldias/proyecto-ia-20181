@@ -1,10 +1,14 @@
-#ifndef __parametros_h__
-#define __parametros_h__
+#ifndef __instancia_h__
+#define __instancia_h__
+
+#include "preferencia.h"
+#include "solucion.h"
 
 #include <vector>
 #include <map>
+#include <string>
 
-class Parametros {
+class Instancia {
     private:
 
     public:
@@ -20,10 +24,14 @@ class Parametros {
         int max_turnos_consec;                      //Maximo de turnos de trabajo consecutivos
         map<int, vector<int>> min_max_turno_consec; //Min y Max de turnos consecutivos del mismo tipo
 
-        Parametros() {
+        Instancia() {
             /* Inicializar parametros a cero */
         }
-        int load_instance();
+        int loadInstance(int argc, char const *argv[]);
+        string getFileName();
+        map<int, vector<Preferencia>> getPreferencias();
+        map<int, vector<Solucion>> generarSolucion();
+        int getDias();
 
 };
 

@@ -1,8 +1,8 @@
-#include "parametros.h"
+#include "instancia.h"
 
 using namespace std;
 
- int Parametros::load_instance() {
+ int Instancia::loadInstance(int argc, char const *argv[]) {
      //Usemos parametros fijos para ir probando
 
      //Desde Cases/1.gen
@@ -67,4 +67,9 @@ using namespace std;
                                         {3,2,3,3,2,2,2,2,3,2,3,3,3,2,3,3,3,2,3,3,2,2,2,2,2,2,2,2} };
     
      return 0;
+}
+
+string Instancia::getFileName() {
+    //Temporal
+    return "Cases/1.gen";
 }

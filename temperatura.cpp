@@ -1,7 +1,14 @@
 #include "temperatura.h"
 
-float Temperatura::get_temp() {
+float Temperatura::getTemp() {
  	float curr_temp = this->temp;
- 	temp *= decay_factor;
  	return curr_temp;
+ }
+
+ void Temperatura::coolDown() {
+	this->temp *= decay_factor;
+ }
+
+ void Temperatura::setTemp(float newTemp) {
+	 this->temp = newTemp;
  }
