@@ -1,70 +1,69 @@
 #include "instancia.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 using namespace std;
 
- int Instancia::loadInstance(int argc, char const *argv[]) {
-     //Usemos parametros fijos para ir probando
+ int Instancia::loadInstance(const char pathGenFile[], const char pathNspFile[]) {
+     //Primero, leemos el archivo .gen
+     cout << "Leyendo Archivo GEN: " << pathGenFile << endl;
+     ifstream genFile;
+     genFile.open(pathGenFile);
+     if (!genFile) {
+         cerr << "Error al abrir archivo GEN: " << pathGenFile << endl;
+         exit(1);
+     }
+     int numeroLinea = 1;
+     string linea = "";
+     int a;
+     int b;
+     int c;
+     int d;
 
-     //Desde Cases/1.gen
-     cant_dias = 7;
-     cant_turnos = 4;
-     min_asig_periodo = 5;
-     max_asig_periodo = 5;
-     min_turnos_consec = 1;
-     max_turnos_consec = 7;
-     //map<int, vector<int>> min_max_turno_consec
-     min_max_turno_consec[1].push_back(1);
-     min_max_turno_consec[1].push_back(7);
-     min_max_turno_consec[2].push_back(1);
-     min_max_turno_consec[2].push_back(7);
-     min_max_turno_consec[3].push_back(1);
-     min_max_turno_consec[3].push_back(7);
-     min_max_turno_consec[4].push_back(1);
-     min_max_turno_consec[4].push_back(7);
-
-     min_max_asig_turno[1].push_back(0);
-     min_max_asig_turno[1].push_back(7);
-     min_max_asig_turno[2].push_back(0);
-     min_max_asig_turno[2].push_back(7);
-     min_max_asig_turno[3].push_back(0);
-     min_max_asig_turno[3].push_back(7);
-     min_max_asig_turno[4].push_back(0);
-     min_max_asig_turno[4].push_back(7);
-
-     //Desde N25/1.nsp
-     cant_trab = 25;
-     vector< vector<int> > matriz_dist{ {3,3,2,0},
-                                        {0,1,2,0},
-                                        {3,3,1,0},
-                                        {2,1,1,0},
-                                        {3,2,1,0},
-                                        {0,1,2,0},
-                                        {2,1,1,0} };
-     vector< vector<int> > matriz_pref{ {4,2,4,4,3,1,1,1,4,2,4,4,4,2,4,4,4,2,4,4,3,1,1,1,3,1,1,1},
-                                        {1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,2,1,1,1},
-                                        {1,2,1,1,2,1,1,1,1,2,1,1,1,2,1,1,1,2,1,1,2,1,1,1,2,1,1,1},
-                                        {4,2,4,4,2,2,2,2,4,2,4,4,4,2,4,4,4,2,4,4,2,2,2,2,2,2,2,2},
-                                        {4,1,4,4,1,1,1,1,4,1,4,4,4,1,4,4,4,1,4,4,1,1,1,1,1,1,1,1},
-                                        {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
-                                        {4,4,4,4,2,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,2,4,4,4,2,4,4,4},
-                                        {1,3,1,1,2,1,1,1,1,3,1,1,1,3,1,1,1,3,1,1,2,1,1,1,2,1,1,1},
-                                        {3,3,3,3,3,4,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,3,4,4,4},
-                                        {1,2,1,1,1,3,3,3,1,2,1,1,1,2,1,1,1,2,1,1,1,3,3,3,1,3,3,3},
-                                        {3,3,3,3,4,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,3,3,3,4,3,3,3},
-                                        {3,1,3,3,2,4,4,4,3,1,3,3,3,1,3,3,3,1,3,3,2,4,4,4,2,4,4,4},
-                                        {1,2,1,1,1,4,4,4,1,2,1,1,1,2,1,1,1,2,1,1,1,4,4,4,1,4,4,4},
-                                        {4,2,4,4,3,1,1,1,4,2,4,4,4,2,4,4,4,2,4,4,3,1,1,1,3,1,1,1},
-                                        {2,1,2,2,3,1,1,1,2,1,2,2,2,1,2,2,2,1,2,2,3,1,1,1,3,1,1,1},
-                                        {3,4,3,3,1,4,4,4,3,4,3,3,3,4,3,3,3,4,3,3,1,4,4,4,1,4,4,4},
-                                        {1,1,1,1,1,4,4,4,1,1,1,1,1,1,1,1,1,1,1,1,1,4,4,4,1,4,4,4},
-                                        {2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1},
-                                        {1,3,1,1,1,2,2,2,1,3,1,1,1,3,1,1,1,3,1,1,1,2,2,2,1,2,2,2},
-                                        {3,1,3,3,1,4,4,4,3,1,3,3,3,1,3,3,3,1,3,3,1,4,4,4,1,4,4,4},
-                                        {3,1,3,3,4,3,3,3,3,1,3,3,3,1,3,3,3,1,3,3,4,3,3,3,4,3,3,3},
-                                        {4,2,4,4,3,3,3,3,4,2,4,4,4,2,4,4,4,2,4,4,3,3,3,3,3,3,3,3},
-                                        {3,1,3,3,2,4,4,4,3,1,3,3,3,1,3,3,3,1,3,3,2,4,4,4,2,4,4,4},
-                                        {1,4,1,1,1,2,2,2,1,4,1,1,1,4,1,1,1,4,1,1,1,2,2,2,1,2,2,2},
-                                        {3,2,3,3,2,2,2,2,3,2,3,3,3,2,3,3,3,2,3,3,2,2,2,2,2,2,2,2} };
+     while (getline(genFile, linea)) {
+         istringstream iss(linea);
+         if (linea.length() < 2) continue; //Nos saltamos las lineas vacias
+         //Dependiendo de la linea, lo que significa cada numero
+         cout << "-------------------- Linea " << numeroLinea << " --------------------" << endl;
+         if (numeroLinea == 1) {
+             //Leemos dias y turnos
+             iss >> this->cantDias >> this->cantTurnos;
+             cout << "Dias: " << this->cantDias << endl;
+             cout << "Turnos: " << this->cantTurnos << endl;
+         }
+         if (numeroLinea == 2) {
+             //Leemos minimo y maximo de asignaciones de turnos
+             iss >> this->minAsignaciones >> this->maxAsignaciones;
+             cout << "Asignaciones minimas: " << this->minAsignaciones << endl;
+             cout << "Asignaciones maximas: " << this->maxAsignaciones << endl;
+         }
+         if (numeroLinea == 3) {
+             //Leemos nimimo y maximo de asignaciones consecutivas de turnos
+             iss >> this->minAsignacionesConsecutivas >> this->maxAsignacionesConsecutivas;
+             cout << "Asignaciones consecutivas minimas: " << this->minAsignacionesConsecutivas << endl;
+             cout << "Asignaciones consecutivas maximas: " << this->maxAsignacionesConsecutivas << endl;
+         }
+         if (numeroLinea >= 4) {
+             //Leemos minimos y maximos por turno
+             iss >> a >> b >> c >> d;
+             this->asigPorTurno[numeroLinea - 3].push_back(c);
+             this->asigPorTurno[numeroLinea - 3].push_back(d);
+             this->asigConsecPorTurno[numeroLinea - 3].push_back(a);
+             this->asigConsecPorTurno[numeroLinea - 3].push_back(b);
+             
+             cout << "Para turno " << numeroLinea - 3 << ":" << endl;
+             cout << "Turnos consecutivos: min=" << this->asigConsecPorTurno[numeroLinea - 3][0] << ", max=" << this->asigConsecPorTurno[numeroLinea - 3][1] << endl;
+             cout << "Cant de asignaciones: min=" << this->asigPorTurno[numeroLinea - 3][0] << ", max=" << this->asigPorTurno[numeroLinea - 3][1] << endl;
+         }
+         numeroLinea++;
+         
+     }
+     genFile.close();
+     
+     //Ahora, leemos el archivo .nsp
+     cout << "Archivo .nsp: " << pathNspFile << endl;
     
      return 0;
 }

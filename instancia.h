@@ -8,30 +8,33 @@
 #include <map>
 #include <string>
 
+using namespace std;
+
 class Instancia {
     private:
 
     public:
-        int cant_trab;                              //Cantidad de trabajadores
-        int cant_dias;                              //Cantidad de dias
-        int cant_turnos;                            //Cantidad de turnos por dia
+        int cantTrabajadores;                      //Cantidad de trabajadores
+        int cantDias;                              //Cantidad de dias
+        int cantTurnos;                            //Cantidad de turnos por dia
+        int minAsignaciones;                       //Minimo de asignaciones por periodo
+        int maxAsignaciones;                       //Maximo de asignaciones por periodo
+        int minAsignacionesConsecutivas;           //Minimo de turnos de trabajo consecutivos
+        int maxAsignacionesConsecutivas;           //Maximo de turnos de trabajo consecutivos
+        map<int, vector<int> > asigPorTurno;       //Min y Max de asignaciones por cada turno
+        map<int, vector<int> > asigConsecPorTurno; //Min y Max de turnos consecutivos del mismo tipo
         vector< vector<int> > matriz_dist;          //Matriz distribucion
         vector< vector<int> > matriz_pref;          //Matriz preferencia
-        int min_asig_periodo;                       //Minimo de asignaciones por periodo
-        int max_asig_periodo;                       //Maximo de asignaciones por periodo
-        map<int, vector<int>> min_max_asig_turno;   //Min y Max de asignaciones por cada turno
-        int min_turnos_consec;                      //Minimo de turnos de trabajo consecutivos
-        int max_turnos_consec;                      //Maximo de turnos de trabajo consecutivos
-        map<int, vector<int>> min_max_turno_consec; //Min y Max de turnos consecutivos del mismo tipo
+        
 
         Instancia() {
             /* Inicializar parametros a cero */
         }
-        int loadInstance(int argc, char const *argv[]);
+        int loadInstance(const char pathGenFile[], const char pathNspFile[]);
         string getFileName();
-        map<int, vector<Preferencia>> getPreferencias();
-        map<int, vector<Solucion>> generarSolucion();
-        int getDias();
+        map<int, vector<Preferencia> > getPreferencias();
+        map<int, vector<Solucion> > generarSolucion();
+        int getNumeroDias();
 
 };
 

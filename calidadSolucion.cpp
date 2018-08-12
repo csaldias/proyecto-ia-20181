@@ -23,7 +23,7 @@ int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vecto
     int totalPenalidades = 0;
     //Penalizar preferencias
     //Instancia podría ser parametros
-    for(int dia = 1; dia <= instancia.getDias(); dia++) {
+    for(int dia = 1; dia <= instancia.getNumeroDias(); dia++) {
         map<int, vector<Solucion>>::iterator it;
         for(it = solucion.begin(); it != solucion.end(); it++) {
             //it->first es int, trabajador
