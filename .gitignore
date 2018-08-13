@@ -32,5 +32,9 @@
 *.app
 
 dataset/
+build/
+bin/
+
+.DS_Store
 
 \.vscode/
