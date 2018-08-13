@@ -2,6 +2,7 @@
 #define __instancia_h__
 
 #include "preferencia.h"
+#include "demanda.h"
 #include "solucion.h"
 
 #include <vector>
@@ -23,15 +24,14 @@ class Instancia {
         int maxAsignacionesConsecutivas;           //Maximo de turnos de trabajo consecutivos
         map<int, vector<int> > asigPorTurno;       //Min y Max de asignaciones por cada turno
         map<int, vector<int> > asigConsecPorTurno; //Min y Max de turnos consecutivos del mismo tipo
-        vector< vector<int> > matriz_dist;          //Matriz distribucion
-        vector< vector<int> > matriz_pref;          //Matriz preferencia
+        map<int, vector<Preferencia> > matrizPreferencias; //Matriz de preferencias {trabajador: [preferencias]}
+        map<int, vector<Demanda> > matrizDemandas;         //Matriz de distribucion (o demanda) {dia: [demandas]}
         
 
         Instancia() {
             /* Inicializar parametros a cero */
         }
         int loadInstance(const char pathGenFile[], const char pathNspFile[]);
-        string getFileName();
         map<int, vector<Preferencia> > getPreferencias();
         map<int, vector<Solucion> > generarSolucion();
         int getNumeroDias();

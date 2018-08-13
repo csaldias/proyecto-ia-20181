@@ -26,24 +26,21 @@ using namespace std;
          istringstream iss(linea);
          if (linea.length() < 2) continue; //Nos saltamos las lineas vacias
          //Dependiendo de la linea, lo que significa cada numero
-         cout << "-------------------- Linea " << numeroLinea << " --------------------" << endl;
          if (numeroLinea == 1) {
              //Leemos dias y turnos
              iss >> this->cantDias >> this->cantTurnos;
-             cout << "Dias: " << this->cantDias << endl;
-             cout << "Turnos: " << this->cantTurnos << endl;
+             if (this->cantTurnos != 4){
+                 cerr << "ERROR: este programa no considera una cantidad de turnos distinta de 4." << endl;
+                 exit(1);
+             }
          }
          if (numeroLinea == 2) {
              //Leemos minimo y maximo de asignaciones de turnos
              iss >> this->minAsignaciones >> this->maxAsignaciones;
-             cout << "Asignaciones minimas: " << this->minAsignaciones << endl;
-             cout << "Asignaciones maximas: " << this->maxAsignaciones << endl;
          }
          if (numeroLinea == 3) {
              //Leemos nimimo y maximo de asignaciones consecutivas de turnos
              iss >> this->minAsignacionesConsecutivas >> this->maxAsignacionesConsecutivas;
-             cout << "Asignaciones consecutivas minimas: " << this->minAsignacionesConsecutivas << endl;
-             cout << "Asignaciones consecutivas maximas: " << this->maxAsignacionesConsecutivas << endl;
          }
          if (numeroLinea >= 4) {
              //Leemos minimos y maximos por turno
@@ -52,10 +49,6 @@ using namespace std;
              this->asigPorTurno[numeroLinea - 3].push_back(d);
              this->asigConsecPorTurno[numeroLinea - 3].push_back(a);
              this->asigConsecPorTurno[numeroLinea - 3].push_back(b);
-             
-             cout << "Para turno " << numeroLinea - 3 << ":" << endl;
-             cout << "Turnos consecutivos: min=" << this->asigConsecPorTurno[numeroLinea - 3][0] << ", max=" << this->asigConsecPorTurno[numeroLinea - 3][1] << endl;
-             cout << "Cant de asignaciones: min=" << this->asigPorTurno[numeroLinea - 3][0] << ", max=" << this->asigPorTurno[numeroLinea - 3][1] << endl;
          }
          numeroLinea++;
          
@@ -63,12 +56,63 @@ using namespace std;
      genFile.close();
      
      //Ahora, leemos el archivo .nsp
-     cout << "Archivo .nsp: " << pathNspFile << endl;
-    
+     cout << "Leyendo Archivo NSP: " << pathNspFile << endl;
+     ifstream nspFile;
+     nspFile.open(pathNspFile);
+     if (!nspFile) {
+         cerr << "Error al abrir archivo NSP: " << pathNspFile << endl;
+         exit(1);
+     }
+     numeroLinea = 1;
+     linea = "";
+
+     while (getline(nspFile, linea)) {
+         istringstream iss(linea);
+         if (linea.length() < 2) continue; //Nos saltamos las lineas vacias
+         //Dependiendo de la linea, lo que significa cada numero
+         if (numeroLinea == 1) {
+             //Leemos trabajadores, dias y turnos
+             int turnosNsp = 0;
+             int diasNsp = 0;
+             iss >> this->cantTrabajadores >> diasNsp >> turnosNsp;
+             if (diasNsp != this->cantDias || turnosNsp != this->cantTurnos) {
+                 cerr << "ERROR: La cantidad de dias y turnos no coincide entre los archivos GEN y NSP." << endl;
+                 exit(1);
+             }
+         }
+         if (numeroLinea >= 2 && numeroLinea <= (1 + this->cantDias)) {
+             //Leemos demanda de cada turno por dia (matriz demandas)
+             iss >> a >> b >> c >> d;
+             this->matrizDemandas[numeroLinea - 1].push_back(Demanda(numeroLinea-1, 1, a));
+             this->matrizDemandas[numeroLinea - 1].push_back(Demanda(numeroLinea-1, 2, b));
+             this->matrizDemandas[numeroLinea - 1].push_back(Demanda(numeroLinea-1, 3, c));
+             this->matrizDemandas[numeroLinea - 1].push_back(Demanda(numeroLinea-1, 4, d));
+         }
+         if (numeroLinea > (1 + this->cantDias)) {
+             //Leemos preferencias de turnos de cada trabajador por dia (matriz preferencias)
+             int idTrabajador = numeroLinea - (1 + this->cantDias);
+             for (int dia = 1; dia <= this->cantDias; dia++) {
+                 iss >> a >> b >> c >> d;
+                 this->matrizPreferencias[idTrabajador].push_back(Preferencia(idTrabajador, 1, dia, a)); //trabajador, turno, dia, peso
+                 this->matrizPreferencias[idTrabajador].push_back(Preferencia(idTrabajador, 2, dia, b));
+                 this->matrizPreferencias[idTrabajador].push_back(Preferencia(idTrabajador, 3, dia, c));
+                 this->matrizPreferencias[idTrabajador].push_back(Preferencia(idTrabajador, 4, dia, d));
+             }
+         }
+         numeroLinea++; 
+     }
+     nspFile.close();
+     cout << "Informacion cargada." << endl;
      return 0;
 }
 
-string Instancia::getFileName() {
-    //Temporal
-    return "Cases/1.gen";
+map<int, vector<Preferencia> > Instancia::getPreferencias(void) {
+    return this->matrizPreferencias;
+}
+
+int Instancia::getNumeroDias(void) {
+    return this->cantDias;
+}
+map<int, vector<Solucion> > Instancia::generarSolucion() {
+    //codigo
 }

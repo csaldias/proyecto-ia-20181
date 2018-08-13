@@ -30,14 +30,14 @@ int main(int argc, char const *argv[])
     SimulatedAnnealing sa;
 	CalidadSolucion calidadSolucion;
 
-    instancia.loadInstance(argc, argv); //Instancia instancia = parametros.loadInstance();
+    instancia.loadInstance(argv[1], argv[2]); //Instancia instancia = parametros.loadInstance();
 	//Trabajador-Preferencia
     map<int, vector<Preferencia>> preferencias = instancia.getPreferencias();
 	//Trabajador-Solucion
 	map<int, vector<Solucion>> mejorSolucion;
 	int costoMejorSolucion = 10000000;
 		
-    std::cout << "Resolviendo instancia:" << instancia.getFileName() << std::endl;
+    std::cout << "Resolviendo instancia:" << argv[1] << std::endl;
 	//Trabajador-Solucion
 	map<int, vector<Solucion>> solucion = instancia.generarSolucion();
 	int costoTotal = calidadSolucion.calcular(instancia, preferencias, solucion);
