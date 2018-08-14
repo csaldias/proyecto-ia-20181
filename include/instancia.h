@@ -32,10 +32,22 @@ class Instancia {
             /* Inicializar parametros a cero */
         }
         int loadInstance(const char pathGenFile[], const char pathNspFile[]);
+        
+        int getCantTrabajadores();
+        int getCantDias();
+        int getCantTurnos();
+        int getMinAsignaciones();
+        int getMaxAsignaciones();
+        int getMinAsignacionesConsecutivas();
+        int getMaxAsignacionesConsecutivas();
+        map<int, vector<int> > getAsigPorTurno();
+        map<int, vector<int> > getAsigConsecPorTurno();
         map<int, vector<Preferencia> > getPreferencias();
-        map<int, vector<Solucion> > generarSolucion();
-        int getNumeroDias();
+        map<int, vector<Demanda> > getDemandas();
+        vector<Demanda> getDemandaDia(int dia);
+        Demanda getDemandaDiaTurno(int dia, int turno);
 
+        map<int, vector<Solucion> > generarSolucion();
 };
 
 #endif

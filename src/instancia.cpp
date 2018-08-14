@@ -1,14 +1,22 @@
 #include "instancia.h"
+#include "asignacion.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <algorithm>
+#include <vector>
+#include <ctime>
+#include <cstdlib>
+#include <cctype>
+#include <locale>
+#include <functional> 
 
 using namespace std;
 
  int Instancia::loadInstance(const char pathGenFile[], const char pathNspFile[]) {
      //Primero, leemos el archivo .gen
-     cout << "Leyendo Archivo GEN: " << pathGenFile << endl;
+     //cout << "Leyendo Archivo GEN: " << pathGenFile << endl;
      ifstream genFile;
      genFile.open(pathGenFile);
      if (!genFile) {
@@ -56,7 +64,7 @@ using namespace std;
      genFile.close();
      
      //Ahora, leemos el archivo .nsp
-     cout << "Leyendo Archivo NSP: " << pathNspFile << endl;
+     //cout << "Leyendo Archivo NSP: " << pathNspFile << endl;
      ifstream nspFile;
      nspFile.open(pathNspFile);
      if (!nspFile) {
@@ -67,14 +75,14 @@ using namespace std;
      linea = "";
 
      while (getline(nspFile, linea)) {
-         istringstream iss(linea);
+         istringstream iss2(linea);
          if (linea.length() < 2) continue; //Nos saltamos las lineas vacias
          //Dependiendo de la linea, lo que significa cada numero
          if (numeroLinea == 1) {
              //Leemos trabajadores, dias y turnos
              int turnosNsp = 0;
              int diasNsp = 0;
-             iss >> this->cantTrabajadores >> diasNsp >> turnosNsp;
+             iss2 >> this->cantTrabajadores >> diasNsp >> turnosNsp;
              if (diasNsp != this->cantDias || turnosNsp != this->cantTurnos) {
                  cerr << "ERROR: La cantidad de dias y turnos no coincide entre los archivos GEN y NSP." << endl;
                  exit(1);
@@ -82,7 +90,8 @@ using namespace std;
          }
          if (numeroLinea >= 2 && numeroLinea <= (1 + this->cantDias)) {
              //Leemos demanda de cada turno por dia (matriz demandas)
-             iss >> a >> b >> c >> d;
+             iss2 >> a >> b >> c >> d;
+             //cout << "Dia " << numeroLinea - 1 << ": " << a << "-" << b << "-" << c << "-" << d << endl;
              this->matrizDemandas[numeroLinea - 1].push_back(Demanda(numeroLinea-1, 1, a));
              this->matrizDemandas[numeroLinea - 1].push_back(Demanda(numeroLinea-1, 2, b));
              this->matrizDemandas[numeroLinea - 1].push_back(Demanda(numeroLinea-1, 3, c));
@@ -92,7 +101,7 @@ using namespace std;
              //Leemos preferencias de turnos de cada trabajador por dia (matriz preferencias)
              int idTrabajador = numeroLinea - (1 + this->cantDias);
              for (int dia = 1; dia <= this->cantDias; dia++) {
-                 iss >> a >> b >> c >> d;
+                 iss2 >> a >> b >> c >> d;
                  this->matrizPreferencias[idTrabajador].push_back(Preferencia(idTrabajador, 1, dia, a)); //trabajador, turno, dia, peso
                  this->matrizPreferencias[idTrabajador].push_back(Preferencia(idTrabajador, 2, dia, b));
                  this->matrizPreferencias[idTrabajador].push_back(Preferencia(idTrabajador, 3, dia, c));
@@ -102,17 +111,92 @@ using namespace std;
          numeroLinea++; 
      }
      nspFile.close();
-     cout << "Informacion cargada." << endl;
+     //cout << "Informacion cargada." << endl;
      return 0;
 }
 
+map<int, vector<Solucion> > Instancia::generarSolucion() {
+    //Primero, asignamos los días y turnos de trabajo de forma aleatoria
+    //  dia     turno        asignacion
+    map<int, map<int, vector<Asignacion> > > asignaciones;
+    srand(unsigned(time(0)));
+
+    for (int dia = 1; dia <= this->cantDias; dia++) {
+        //Designar turnos por dia
+        //Primero, debemos ver si requerimos turnos extras para cubrir la demanda del dia
+        //Esto es, la demanda total del dia es mayor a la cantidad de trabajadores del problema?
+        vector<int> trabajadores;
+        for (int i = 1; i <= this->cantTrabajadores; i++) {
+            trabajadores.push_back(i);
+        }
+
+        //Obtenemos la demanda total del dia
+        int demandaTotal = 0;
+        for (int turno = 1; turno <= this->cantTurnos; turno++) {
+            demandaTotal += this->matrizDemandas[dia][turno].getCantidadRequerida();
+        }
+
+        //Comparamos con la cantidad de trabajadores, para obtener la cantidad de turnos extras a asignar
+        int cantidadTurnosExtras = (demandaTotal <= this->cantTrabajadores) ? 0 : demandaTotal - this->cantTrabajadores;
+        bool turnoExtra = false;
+
+        map<int, vector<Asignacion> > trabajadoresSeleccionados;
+
+        while ( (trabajadores.size() > demandaTotal) && (cantidadTurnosExtras > 0 || trabajadoresSeleccionados.empty()) ) {
+            int tipoAsignacion = turnoExtra? 1 : 0;
+            for (int turno = 1; turno <= this->cantTurnos; turno++) {
+                //Seleccionar enfermeros de forma aleatoria para cubrir la demanda
+                int demandaTurno = this->matrizDemandas[dia][turno].getCantidadRequerida();
+                random_shuffle(trabajadores.begin(), trabajadores.end());
+
+                for (int i = 0; i < demandaTurno; i++) {
+                    trabajadoresSeleccionados[turno].push_back(Asignacion(trabajadores.back(), tipoAsignacion));
+                    trabajadores.pop_back();
+                }
+
+            }
+        }
+
+    }
+
+}
+
+int Instancia::getCantTrabajadores(void) {
+    return this->cantTrabajadores;
+}
+int Instancia::getCantDias(void) {
+    return this->cantDias;
+}
+int Instancia::getCantTurnos(void) {
+    return this->cantTurnos;
+}
+int Instancia::getMinAsignaciones(void) {
+    return this->minAsignaciones;
+}
+int Instancia::getMaxAsignaciones(void) {
+    return this->maxAsignaciones;
+}
+int Instancia::getMinAsignacionesConsecutivas(void) {
+    return this->minAsignacionesConsecutivas;
+}
+int Instancia::getMaxAsignacionesConsecutivas(void) {
+    return this->maxAsignacionesConsecutivas;
+}
+map<int, vector<int> > Instancia::getAsigPorTurno(void) {
+    return (this->asigPorTurno);
+}
+map<int, vector<int> > Instancia::getAsigConsecPorTurno(void) {
+    return this->asigConsecPorTurno;
+}
 map<int, vector<Preferencia> > Instancia::getPreferencias(void) {
     return this->matrizPreferencias;
 }
-
-int Instancia::getNumeroDias(void) {
-    return this->cantDias;
+map<int, vector<Demanda> > Instancia::getDemandas(void) {
+    return this->matrizDemandas;
 }
-map<int, vector<Solucion> > Instancia::generarSolucion() {
-    //codigo
+vector<Demanda> Instancia::getDemandaDia(int dia) {
+    return this->matrizDemandas[dia];
+}
+Demanda Instancia::getDemandaDiaTurno(int dia, int turno) {
+    return this->matrizDemandas[dia][turno-1];
 }

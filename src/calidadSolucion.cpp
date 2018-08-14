@@ -23,7 +23,7 @@ int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vecto
     int totalPenalidades = 0;
     //Penalizar preferencias
     //Instancia podría ser parametros
-    for(int dia = 1; dia <= instancia.getNumeroDias(); dia++) {
+    for(int dia = 1; dia <= instancia.getCantDias(); dia++) {
         map<int, vector<Solucion>>::iterator it;
         for(it = solucion.begin(); it != solucion.end(); it++) {
             //it->first es int, trabajador
@@ -49,7 +49,7 @@ int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vecto
             if (listaSoluciones[i].getTurno() != 4) cantidadTurnosTrabajo++;
         }
         //workedSequence viene de instancia
-        if (cantidadTurnosTrabajo < workedSequence.getMin() || cantidadTurnosTrabajo > workedSequence.getMax())
+        if (cantidadTurnosTrabajo < instancia.getMinAsignaciones() || cantidadTurnosTrabajo > instancia.getMaxAsignaciones())
             totalPenalidades += config.getValorPenalizacionBlanda();
     }
 
@@ -79,7 +79,7 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
         }
     }
 
-    //Penalizar turnos
+    //Penalizar turnos (minimos y maximos, cantidad de turnos consecutivos)
     map<int, vector<Solucion>>::iterator it;
     for(it = solucion.begin(); it != solucion.end(); it++) {
         //it->first es int, trabajador
@@ -98,13 +98,13 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
         }
         //Penalizamos los limites minimos y maximos de cada tipo de turno
         //Turno 1: mañana
-        if (cantidadTiposTurnos[1] < morningShift.getMin() || cantidadTiposTurnos[1] > morningShift.getMax()) totalPenalidades += config.getValorPenalizacionDura();
+        if (cantidadTiposTurnos[1] < instancia.getAsigPorTurno()[1][0] || cantidadTiposTurnos[1] > instancia.getAsigPorTurno()[1][1]) totalPenalidades += config.getValorPenalizacionDura();
         //Turno 2: tarde
-        if (cantidadTiposTurnos[2] < afternooonShift.getMin() || cantidadTiposTurnos[2] > afternooonShift.getMax()) totalPenalidades += config.getValorPenalizacionDura();
+        if (cantidadTiposTurnos[2] < instancia.getAsigPorTurno()[2][0] || cantidadTiposTurnos[2] > instancia.getAsigPorTurno()[2][1]) totalPenalidades += config.getValorPenalizacionDura();
         //Turno 3: noche
-        if (cantidadTiposTurnos[3] < nightShift.getMin() || cantidadTiposTurnos[3] > nightShift.getMax()) totalPenalidades += config.getValorPenalizacionDura();
+        if (cantidadTiposTurnos[3] < instancia.getAsigPorTurno()[3][0] || cantidadTiposTurnos[3] > instancia.getAsigPorTurno()[3][1]) totalPenalidades += config.getValorPenalizacionDura();
         //Turno 4: descanso
-        if (cantidadTiposTurnos[4] < freeShift.getMin() || cantidadTiposTurnos[4] > freeShift.getMax()) totalPenalidades += config.getValorPenalizacionDura();
+        if (cantidadTiposTurnos[4] < instancia.getAsigPorTurno()[4][0] || cantidadTiposTurnos[4] > instancia.getAsigPorTurno()[4][1]) totalPenalidades += config.getValorPenalizacionDura();
 
         int turnoManiana = 0;
         int turnoTarde = 0;
@@ -171,19 +171,19 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
             }
 
             //Ahora, calculamos las penalidades
-            if (asignacionesConsecutivas < attributionSequence.getMin() || asignacionesConsecutivas > attributionSequence.getMax())
+            if (asignacionesConsecutivas < instancia.getMinAsignacionesConsecutivas() || asignacionesConsecutivas > instancia.getMaxAsignacionesConsecutivas())
                 totalPenalidades += config.getValorPenalizacionDura();
             
-            if (manianaConsecutiva < morningShift.getMinConsecutivas() || manianaConsecutiva > morningShift.getMaxConsecutivas())
+            if (manianaConsecutiva < instancia.getAsigConsecPorTurno()[1][0] || manianaConsecutiva > instancia.getAsigConsecPorTurno()[1][1])
                 totalPenalidades += config.getValorPenalizacionDura();
             
-            if (tardeConsecutiva < afternoonShift.getMinConsecutivas() || tardeConsecutiva > afternoonShift.getMaxConsecutivas())
+            if (tardeConsecutiva < instancia.getAsigConsecPorTurno()[2][0] || tardeConsecutiva > instancia.getAsigConsecPorTurno()[2][1])
                 totalPenalidades += config.getValorPenalizacionDura();
             
-            if (nocheConsecutiva < nightShift.getMinConsecutivas() || nocheConsecutiva > nightShift.getMaxConsecutivas())
+            if (nocheConsecutiva < instancia.getAsigConsecPorTurno()[3][0] || nocheConsecutiva > instancia.getAsigConsecPorTurno()[3][1])
                 totalPenalidades += config.getValorPenalizacionDura();
             
-            if (libreConsecutiva < freeShift.getMinConsecutivas() || libreConsecutiva > freeShift.getMaxConsecutivas())
+            if (libreConsecutiva < instancia.getAsigConsecPorTurno()[4][0] || libreConsecutiva > instancia.getAsigConsecPorTurno()[4][1])
                 totalPenalidades += config.getValorPenalizacionDura();
             
         }
