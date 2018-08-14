@@ -117,48 +117,51 @@ using namespace std;
 
 map<int, vector<Solucion> > Instancia::generarSolucion() {
     //Primero, asignamos los días y turnos de trabajo de forma aleatoria
-    //  dia     turno        asignacion
-    map<int, map<int, vector<Asignacion> > > asignaciones;
+    //  dia     turno   enfermero
+    map<int, map<int, vector<int> > > asignaciones;
+    // trabajador  {trabajador, dia, turno, asignacion}
+    map<int, vector<Solucion> > soluciones;
     srand(unsigned(time(0)));
 
     for (int dia = 1; dia <= this->cantDias; dia++) {
         //Designar turnos por dia
-        //Primero, debemos ver si requerimos turnos extras para cubrir la demanda del dia
-        //Esto es, la demanda total del dia es mayor a la cantidad de trabajadores del problema?
+
         vector<int> trabajadores;
         for (int i = 1; i <= this->cantTrabajadores; i++) {
             trabajadores.push_back(i);
         }
-
         //Obtenemos la demanda total del dia
         int demandaTotal = 0;
         for (int turno = 1; turno <= this->cantTurnos; turno++) {
             demandaTotal += this->matrizDemandas[dia][turno].getCantidadRequerida();
         }
 
-        //Comparamos con la cantidad de trabajadores, para obtener la cantidad de turnos extras a asignar
-        int cantidadTurnosExtras = (demandaTotal <= this->cantTrabajadores) ? 0 : demandaTotal - this->cantTrabajadores;
-        bool turnoExtra = false;
+        map<int, vector<int> > trabajadoresSeleccionados;
+        for (int turno = 1; turno <= this->cantTurnos; turno++) {
+            //Seleccionar enfermeros de forma aleatoria para cubrir la demanda
+            int demandaTurno = this->matrizDemandas[dia][turno].getCantidadRequerida();
+            random_shuffle(trabajadores.begin(), trabajadores.end());
 
-        map<int, vector<Asignacion> > trabajadoresSeleccionados;
-
-        while ( (trabajadores.size() > demandaTotal) && (cantidadTurnosExtras > 0 || trabajadoresSeleccionados.empty()) ) {
-            int tipoAsignacion = turnoExtra? 1 : 0;
-            for (int turno = 1; turno <= this->cantTurnos; turno++) {
-                //Seleccionar enfermeros de forma aleatoria para cubrir la demanda
-                int demandaTurno = this->matrizDemandas[dia][turno].getCantidadRequerida();
-                random_shuffle(trabajadores.begin(), trabajadores.end());
-
-                for (int i = 0; i < demandaTurno; i++) {
-                    trabajadoresSeleccionados[turno].push_back(Asignacion(trabajadores.back(), tipoAsignacion));
-                    trabajadores.pop_back();
-                }
-
+            for (int i = 0; i < demandaTurno; i++) {
+                trabajadoresSeleccionados[turno].push_back(trabajadores.back());
+                trabajadores.pop_back();
             }
         }
-
+        asignaciones[dia] = trabajadoresSeleccionados;
     }
 
+    //Ahora, creamos la matriz de soluciones en base a esta asignacion
+    vector<Solucion> soluciones;
+    for (int dia = 1; dia <= this->cantDias; dia++) {
+        for (int turno = 1; turno <= this->cantTurnos; turno++) {
+            vector<int> asigDiaTurno = asignaciones[dia][turno];
+            vector<int>::iterator it;
+            for(it = asigDiaTurno.begin(); it != asigDiaTurno.end(); it++) {
+                soluciones[*it].push_back(Solucion(*it, dia, turno, 0));
+            }
+        }
+    }
+    return soluciones;
 }
 
 int Instancia::getCantTrabajadores(void) {
