@@ -15,12 +15,12 @@ class Config {
         Config() {
             //Penalizaciones
             penalizacionBlanda = 100;
-            penalizacionDura = 1000;
+            penalizacionDura = 10000;
             //Datos para Algoritmo
             temperaturaInicial = 100.0f;
             temperaturaMinima = 0.0f;
             tasaEnfriamiento = 0.999f;
-            numeroIteraciones = 5000;
+            numeroIteraciones = 1000;
         }
         int getValorPenalizacionBlanda(void);
         int getValorPenalizacionDura(void);

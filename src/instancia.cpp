@@ -16,7 +16,7 @@ using namespace std;
 
  int Instancia::loadInstance(const char pathGenFile[], const char pathNspFile[]) {
      //Primero, leemos el archivo .gen
-     //cout << "Leyendo Archivo GEN: " << pathGenFile << endl;
+     cout << "Leyendo Archivo GEN: " << pathGenFile << endl;
      ifstream genFile;
      genFile.open(pathGenFile);
      if (!genFile) {
@@ -64,7 +64,7 @@ using namespace std;
      genFile.close();
      
      //Ahora, leemos el archivo .nsp
-     //cout << "Leyendo Archivo NSP: " << pathNspFile << endl;
+     cout << "Leyendo Archivo NSP: " << pathNspFile << endl;
      ifstream nspFile;
      nspFile.open(pathNspFile);
      if (!nspFile) {
@@ -111,7 +111,7 @@ using namespace std;
          numeroLinea++; 
      }
      nspFile.close();
-     //cout << "Informacion cargada." << endl;
+     cout << "Informacion cargada." << endl;
      return 0;
 }
 
@@ -119,6 +119,7 @@ map<int, vector<Solucion> > Instancia::generarSolucion() {
     //Primero, asignamos los días y turnos de trabajo de forma aleatoria
     //  dia     turno   enfermero
     map<int, map<int, vector<int> > > asignaciones;
+    //cout << "generarSolucion: Obteniendo asignaciones..." << endl;
     // trabajador  {trabajador, dia, turno, asignacion}
     map<int, vector<Solucion> > soluciones;
     srand(unsigned(time(0)));
@@ -150,8 +151,9 @@ map<int, vector<Solucion> > Instancia::generarSolucion() {
         asignaciones[dia] = trabajadoresSeleccionados;
     }
 
+    //cout << "generarSolucion: Generando matriz soluciones..." << endl;
+
     //Ahora, creamos la matriz de soluciones en base a esta asignacion
-    vector<Solucion> soluciones;
     for (int dia = 1; dia <= this->cantDias; dia++) {
         for (int turno = 1; turno <= this->cantTurnos; turno++) {
             vector<int> asigDiaTurno = asignaciones[dia][turno];

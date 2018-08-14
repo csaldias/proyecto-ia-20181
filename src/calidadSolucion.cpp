@@ -11,20 +11,20 @@
 
 using namespace std;
 
-int CalidadSolucion::calcular(Instancia instancia, map<int, vector<Preferencia>> preferencias, map<int, vector<Solucion>> solucion) {
+int CalidadSolucion::calcular(Instancia instancia, map<int, vector<Preferencia> > preferencias, map<int, vector<Solucion> > solucion) {
     int costoRestriccBlandas = calcularRestriccBlandas(instancia, preferencias, solucion);
     int costoRestriccDuras = calcularRestriccDuras(instancia, solucion);
     return costoRestriccBlandas + costoRestriccDuras;
 }
 
-int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vector<Preferencia>> preferencias, map<int, vector<Solucion>> solucion) {
+int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vector<Preferencia> > preferencias, map<int, vector<Solucion> > solucion) {
     Config config;
     //workedSequence ==> (min,max)_asig_periodo
     int totalPenalidades = 0;
     //Penalizar preferencias
     //Instancia podría ser parametros
     for(int dia = 1; dia <= instancia.getCantDias(); dia++) {
-        map<int, vector<Solucion>>::iterator it;
+        map<int, vector<Solucion> >::iterator it;
         for(it = solucion.begin(); it != solucion.end(); it++) {
             //it->first es int, trabajador
             //it->second es vector<Solucion>, soluciones
@@ -38,7 +38,7 @@ int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vecto
 
     //Penalizar limite de dias trabajados
     //Instancia podría ser parametros
-    map<int, vector<Solucion>>::iterator it;
+    map<int, vector<Solucion> >::iterator it;
     for(it = solucion.begin(); it != solucion.end(); it++) {
         //it->first es int, trabajador
         //it->second es vector<Solucion>, soluciones
@@ -56,13 +56,13 @@ int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vecto
     return totalPenalidades;
 }
 
-int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<Solucion>> solucion) {
+int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<Solucion> > solucion) {
     Config config;
     //workedSequence ==> (min,max)_asig_periodo
     int totalPenalidades = 0;
     
     //Penalizar turnos consecutivos
-    map<int, vector<Solucion>>::iterator it;
+    map<int, vector<Solucion> >::iterator it;
     for(it = solucion.begin(); it != solucion.end(); it++) {
         //it->first es int, trabajador
         //it->second es vector<Solucion>, soluciones
@@ -80,7 +80,6 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
     }
 
     //Penalizar turnos (minimos y maximos, cantidad de turnos consecutivos)
-    map<int, vector<Solucion>>::iterator it;
     for(it = solucion.begin(); it != solucion.end(); it++) {
         //it->first es int, trabajador
         //it->second es vector<Solucion>, soluciones

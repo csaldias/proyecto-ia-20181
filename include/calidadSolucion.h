@@ -13,9 +13,9 @@ using namespace std;
 
 class CalidadSolucion {
     public:
-        int calcular(Instancia instancia, map<int, vector<Preferencia>> preferencias, map<int, vector<Solucion>> solucion);
-        int calcularRestriccBlandas(Instancia instancia, map<int, vector<Preferencia>> preferencias, map<int, vector<Solucion>> solucion);
-        int calcularRestriccDuras(Instancia instancia, map<int, vector<Solucion>> solucion);
+        int calcular(Instancia instancia, map<int, vector<Preferencia> > preferencias, map<int, vector<Solucion> > solucion);
+        int calcularRestriccBlandas(Instancia instancia, map<int, vector<Preferencia> > preferencias, map<int, vector<Solucion> > solucion);
+        int calcularRestriccDuras(Instancia instancia, map<int, vector<Solucion> > solucion);
     private:
         Preferencia getPreferencia(vector<Preferencia> listaPreferencias, int dia, int trabajador);
         Solucion getSolucion(vector<Solucion> listaSoluciones, int dia, int trabajador);
