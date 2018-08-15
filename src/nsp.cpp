@@ -22,7 +22,6 @@ using namespace std;
 
 int main(int argc, char const *argv[])
 {
-    //Codigo
     chrono::high_resolution_clock::time_point inicio = chrono::high_resolution_clock::now();
     srand(unsigned(time(0)));
 
@@ -32,7 +31,7 @@ int main(int argc, char const *argv[])
 	CalidadSolucion calidadSolucion;
 
 	std::cout << "Resolviendo instancia: " << argv[1] << std::endl;
-    instancia.loadInstance(argv[1], argv[2]); //Instancia instancia = parametros.loadInstance();
+    instancia.loadInstance(argv[1], argv[2]); 
 	//Trabajador-Preferencia
     map<int, vector<Preferencia> > preferencias = instancia.getPreferencias();
 	//Trabajador-Solucion
@@ -67,18 +66,17 @@ int main(int argc, char const *argv[])
 		int iteraciones = config.getNumeroIteraciones();
 		while (iteraciones >= 1) {
             //Trabajador-Solucion
-			//std::cout << "---------- It " << iteraciones << " ----------" << std::endl;
-			//std::cout << "Generando nueva solucion..." << endl;
-
 			map<int, vector<Solucion> > nuevaSolucion = instancia.variarSolucion(solucionActual);
 			//map<int, vector<Solucion> > nuevaSolucion = instancia.generarSolucion();
-
             int costoTotalNuevaSolucion = calidadSolucion.calcular(instancia, preferencias, nuevaSolucion);
-			//std::cout << "Costo nueva solucion: " << costoTotalNuevaSolucion << endl;
 
             float randomValue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
-			if (sa.probAceptacion(costoSolucionActual, costoTotalNuevaSolucion, temperaturaActual) > randomValue ){
+			if (costoTotalNuevaSolucion < costoSolucionActual) {
+				//std::cout << "Costo reducido en " << costoSolucionActual - costoTotalNuevaSolucion << std::endl;
+				costoSolucionActual = costoTotalNuevaSolucion;
+				solucionActual = nuevaSolucion;
+			} else if (sa.probAceptacion(costoSolucionActual, costoTotalNuevaSolucion, temperaturaActual) > randomValue ){
 				costoSolucionActual = costoTotalNuevaSolucion;
 				solucionActual = nuevaSolucion;
 			}
@@ -87,8 +85,6 @@ int main(int argc, char const *argv[])
 				std::cout << "Costo reducido en " << costoMejorSolucion - costoSolucionActual << std::endl;
 				costoMejorSolucion = costoSolucionActual;
 				mejorSolucion = solucionActual;
-				//temperatura.setTemp(temperaturaInicial);
-				//iteraciones = config.getNumeroIteraciones();
 			}
 			iteraciones--;
 		}
@@ -120,6 +116,6 @@ int main(int argc, char const *argv[])
 	}
 	
 	//Imprimir a archivo mejor solucion
-	instancia.outputSolucion(mejorSolucion, tokens[1]+"-"+tokens[2]);
+	instancia.outputSolucion(mejorSolucion, "output/"+tokens[1]+"-"+tokens[2]);
     return 0;
 }
