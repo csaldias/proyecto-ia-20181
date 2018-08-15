@@ -6,17 +6,17 @@ class Solucion {
         int trabajador;
         int dia;
         int turno;
-        int asignacion;
     public:
-        Solucion(int _trabajador, int _dia, int _turno, int _asignacion):
+        Solucion(int _trabajador, int _dia, int _turno):
             trabajador(_trabajador),
             dia(_dia),
-            turno(_turno),
-            asignacion(_asignacion) {}
+            turno(_turno) {}
         int getTrabajador(void);
         int getDia(void);
         int getTurno(void);
-        int getAsignacion(void);
+        void setTrabajador(int trabajador);
+        void setDia(int dia);
+        void setTurno(int turno);
 };
 
 #endif

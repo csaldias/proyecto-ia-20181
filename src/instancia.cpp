@@ -1,5 +1,4 @@
 #include "instancia.h"
-#include "asignacion.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -120,27 +119,29 @@ map<int, vector<Solucion> > Instancia::generarSolucion() {
     //  dia     turno   enfermero
     map<int, map<int, vector<int> > > asignaciones;
     //cout << "generarSolucion: Obteniendo asignaciones..." << endl;
-    // trabajador  {trabajador, dia, turno, asignacion}
+    // trabajador  {trabajador, dia, turno}
     map<int, vector<Solucion> > soluciones;
     srand(unsigned(time(0)));
 
     for (int dia = 1; dia <= this->cantDias; dia++) {
         //Designar turnos por dia
-
+        //cout << "generarSolucion - asignaciones - turnos por dia" << endl;
         vector<int> trabajadores;
         for (int i = 1; i <= this->cantTrabajadores; i++) {
             trabajadores.push_back(i);
         }
         //Obtenemos la demanda total del dia
+        //cout << "generarSolucion - asignaciones - demanda por dia" << endl;
         int demandaTotal = 0;
         for (int turno = 1; turno <= this->cantTurnos; turno++) {
-            demandaTotal += this->matrizDemandas[dia][turno].getCantidadRequerida();
+            demandaTotal += this->matrizDemandas[dia][turno-1].getCantidadRequerida();
         }
 
         map<int, vector<int> > trabajadoresSeleccionados;
+        //cout << "generarSolucion - asignaciones - aleatorio" << endl;
         for (int turno = 1; turno <= this->cantTurnos; turno++) {
             //Seleccionar enfermeros de forma aleatoria para cubrir la demanda
-            int demandaTurno = this->matrizDemandas[dia][turno].getCantidadRequerida();
+            int demandaTurno = this->matrizDemandas[dia][turno-1].getCantidadRequerida();
             random_shuffle(trabajadores.begin(), trabajadores.end());
 
             for (int i = 0; i < demandaTurno; i++) {
@@ -148,22 +149,117 @@ map<int, vector<Solucion> > Instancia::generarSolucion() {
                 trabajadores.pop_back();
             }
         }
+        //En el caso de que aún queden trabajadores sin asignación, los asignamos a turno de descanso
+        //Esto es por defecto: si no se te asigna turno día/tarde/noche, se asume turno de descanso
+        if (trabajadores.size() > 0) {
+            int trabajadoresDescanso = trabajadores.size();
+            for (int i = 0; i < trabajadoresDescanso; i++) {
+                trabajadoresSeleccionados[4].push_back(trabajadores.back());
+                trabajadores.pop_back();
+            }
+        }
+
         asignaciones[dia] = trabajadoresSeleccionados;
     }
 
     //cout << "generarSolucion: Generando matriz soluciones..." << endl;
-
     //Ahora, creamos la matriz de soluciones en base a esta asignacion
     for (int dia = 1; dia <= this->cantDias; dia++) {
         for (int turno = 1; turno <= this->cantTurnos; turno++) {
             vector<int> asigDiaTurno = asignaciones[dia][turno];
             vector<int>::iterator it;
             for(it = asigDiaTurno.begin(); it != asigDiaTurno.end(); it++) {
-                soluciones[*it].push_back(Solucion(*it, dia, turno, 0));
+                soluciones[*it].push_back(Solucion((*it), dia, turno));
             }
         }
     }
     return soluciones;
+}
+
+string buscarAsignacion(map<int, vector<Solucion> > solucion, int trabajador, int dia, int turno) {
+    vector<Solucion> asignaciones = solucion[trabajador];
+    vector<Solucion>::iterator it;
+
+    map<int, string> mapTurnos;
+    mapTurnos[1] = "D";
+    mapTurnos[2] = "T";
+    mapTurnos[3] = "N";
+    mapTurnos[4] = "L";
+
+    for (it = asignaciones.begin(); it != asignaciones.end(); it++) {
+        if ( (*it).getDia() == dia && (*it).getTurno() == turno ) {
+            return mapTurnos[turno];
+        }
+    }
+    return "-";
+}
+
+void Instancia::outputSolucion(map<int, vector<Solucion> > solucion, string nombre) {
+    //Abrimos el archivo de salida
+    string pathOutputSolucion = nombre + ".out";
+     cout << "Escribiendo solucion: " << pathOutputSolucion << endl;
+     ofstream outFile (pathOutputSolucion);
+     if (!outFile) {
+         cerr << "Error al abrir archivo OUT: " << pathOutputSolucion << endl;
+         exit(1);
+     }
+     outFile << "   ";
+
+     //Primero, escribimos la estructura del archivo
+     for (int dia = 1; dia <= this->cantDias; dia++) {
+        outFile << "S1 S2 S3 S4 ";
+     }
+     outFile << endl;
+
+     for (int trabajador = 1; trabajador <= this->cantTrabajadores; trabajador++) {
+        if (trabajador < 10) {
+            outFile << " " << trabajador << " ";
+        } else {
+            outFile << trabajador << " ";
+        }
+        
+        vector<Solucion> asignaciones = solucion[trabajador];
+        for (int dia = 1; dia <= this->cantDias; dia++) {
+            //Imprimimos las asignaciones del trabajador por dia
+            for (int turno = 1; turno <= this->cantTurnos; turno++) {
+                outFile << buscarAsignacion(solucion, trabajador, dia, turno) << "  ";
+            }
+             
+        }
+        outFile << endl;
+    }
+    outFile.close();
+}
+
+map<int, vector<Solucion> > Instancia::variarSolucion(map<int, vector<Solucion> > solucion) {
+    //Hacemos una permutación en la solución
+    //En este caso, cambiamos la asignación de 1 día aleatorio de 1 trabajador aleatorio.
+
+    //Elegimos a nuestros 2 trabajadores
+    int trabajador1 = (rand() % this->cantTrabajadores) + 1;
+    //int trabajador2 = (rand() % this->cantTrabajadores) + 1;
+    //while (trabajador1 == trabajador2) { //Nos aseguramos que sean distintos
+    //    trabajador2 = (rand() % this->cantTrabajadores) + 1;
+    //}
+
+    int dia = (rand() % this->cantDias) + 1;
+    int nuevoTurno = (rand() % this->cantTurnos) + 1;
+
+    map<int, vector<Solucion> > solMod = solucion;
+    //vector<Solucion> solTrab1;
+    //vector<Solucion> solTrab2;
+    vector<Solucion>::iterator it;
+    for (it = solMod[trabajador1].begin(); it != solMod[trabajador1].end(); it++) {
+        if ((*it).getDia() == dia) {
+            (*it).setTurno(nuevoTurno);
+        }
+    }
+    //solTrab2 = solMod[trabajador2];
+
+    //solMod[trabajador1] = solTrab2;
+    //solMod[trabajador2] = solTrab1;
+
+    return solMod;
 }
 
 int Instancia::getCantTrabajadores(void) {

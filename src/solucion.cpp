@@ -12,6 +12,12 @@ int Solucion::getTurno() {
     return this->turno;
 }
 
-int Solucion::getAsignacion() {
-    return this->asignacion;
+void Solucion::setTrabajador(int trabajador) {
+    this->trabajador = trabajador;
+}
+void Solucion::setDia(int dia) {
+    this->dia = dia;
+}
+void Solucion::setTurno(int turno) {
+    this->turno = turno;
 }

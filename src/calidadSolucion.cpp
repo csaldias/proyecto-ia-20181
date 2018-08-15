@@ -8,6 +8,7 @@
 
 #include <map>
 #include <vector>
+#include <iostream>
 
 using namespace std;
 
@@ -19,25 +20,26 @@ int CalidadSolucion::calcular(Instancia instancia, map<int, vector<Preferencia> 
 
 int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vector<Preferencia> > preferencias, map<int, vector<Solucion> > solucion) {
     Config config;
-    //workedSequence ==> (min,max)_asig_periodo
     int totalPenalidades = 0;
+    //map<int, int> penalidadesPorTrabajador;
+
     //Penalizar preferencias
-    //Instancia podría ser parametros
     for(int dia = 1; dia <= instancia.getCantDias(); dia++) {
         map<int, vector<Solucion> >::iterator it;
         for(it = solucion.begin(); it != solucion.end(); it++) {
             //it->first es int, trabajador
+            int trabador = it->first;
             //it->second es vector<Solucion>, soluciones
-            vector<Preferencia> listaPreferencias = preferencias[it->first]; //Preferencias de trabajador
+            vector<Preferencia> listaPreferencias = preferencias[trabador]; //Preferencias de trabajador
             vector<Solucion> listaSoluciones = it->second; //Soluciones por trabador
-            Preferencia preferencia = getPreferencia(listaPreferencias, dia, it->first);
-            Solucion solucion = getSolucion(listaSoluciones, dia, it->first);
-            if(solucion.getTurno() != preferencia.getTurno()) totalPenalidades += preferencia.getPeso();
+            Solucion solucion = getSolucion(listaSoluciones, dia);
+            Preferencia preferencia = getPreferencia(listaPreferencias, dia, it->first, solucion.getTurno());
+            totalPenalidades += preferencia.getPeso();
         }
     }
+    cout << "Blanda - Penalizar Preferencias: " << totalPenalidades << endl;
 
-    //Penalizar limite de dias trabajados
-    //Instancia podría ser parametros
+    //Penalizar limites de dias trabajados
     map<int, vector<Solucion> >::iterator it;
     for(it = solucion.begin(); it != solucion.end(); it++) {
         //it->first es int, trabajador
@@ -48,21 +50,46 @@ int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vecto
         for (int i = 0; i < listaSoluciones.size(); ++i) {
             if (listaSoluciones[i].getTurno() != 4) cantidadTurnosTrabajo++;
         }
-        //workedSequence viene de instancia
         if (cantidadTurnosTrabajo < instancia.getMinAsignaciones() || cantidadTurnosTrabajo > instancia.getMaxAsignaciones())
             totalPenalidades += config.getValorPenalizacionBlanda();
     }
+    cout << "Blanda - Limite Dias Trabajados: " << totalPenalidades << endl;
 
     return totalPenalidades;
 }
 
 int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<Solucion> > solucion) {
+    //Cobertura de demanda por turno por dia
+    //numero de dias trabajados totales
+    //numero de dias trabajados consecutivos
     Config config;
-    //workedSequence ==> (min,max)_asig_periodo
     int totalPenalidades = 0;
     
-    //Penalizar turnos consecutivos
     map<int, vector<Solucion> >::iterator it;
+    vector<Solucion>::iterator it2;
+    //Penalizar cobertura de demanda por turno por día
+    for (int dia = 1; dia <= instancia.getCantDias(); dia++) {
+        for (int turno = 1; turno <= instancia.getCantTurnos(); turno++) {
+            //Demanda esperada para este dia/turno
+            int demandaEsperada = instancia.getDemandaDiaTurno(dia, turno).getCantidadRequerida();
+
+            //Oferta para este dia/turno
+            int oferta = 0;
+            for(it = solucion.begin(); it != solucion.end(); it++) {
+                for(it2 = (it->second).begin(); it2 != (it->second).end(); it2++) {
+                    if ((*it2).getDia() == dia && (*it2).getTurno() == turno) {
+                        oferta++;
+                        break;
+                    }
+                }
+            }
+
+            if (demandaEsperada > oferta) totalPenalidades += config.getValorPenalizacionDura() * (demandaEsperada - oferta);
+        }
+    }
+    cout << "Dura - Cobertura Demanda: " << totalPenalidades << endl;
+
+    //Penalizar turnos consecutivos
     for(it = solucion.begin(); it != solucion.end(); it++) {
         //it->first es int, trabajador
         //it->second es vector<Solucion>, soluciones
@@ -74,19 +101,21 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
                 //Penalizamos el día
                 if (turnoActual == 2 && turnoAnterior == 3) totalPenalidades += config.getValorPenalizacionDura();
                 if (turnoActual == 1 && turnoAnterior == 3) totalPenalidades += config.getValorPenalizacionDura();
+                if (turnoActual == 1 && turnoAnterior == 2) totalPenalidades += config.getValorPenalizacionDura();
             }
             turnoAnterior = turnoActual;
         }
     }
+    cout << "Dura - Turnos Consecutivos: " << totalPenalidades << endl;
 
-    //Penalizar turnos (minimos y maximos, cantidad de turnos consecutivos)
+    //Penalizar cantidad total max y min de turnos
+    map<int, int> cantidadTiposTurnos;
     for(it = solucion.begin(); it != solucion.end(); it++) {
         //it->first es int, trabajador
         //it->second es vector<Solucion>, soluciones
         vector<Solucion> listaSoluciones = it->second; //Soluciones por trabajador
         
         //Contamos la cantidad de cada tipo de turno
-        map<int, int> cantidadTiposTurnos;
         cantidadTiposTurnos[1] = 0;
         cantidadTiposTurnos[2] = 0;
         cantidadTiposTurnos[3] = 0;
@@ -94,16 +123,25 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
         for (int i = 0; i < listaSoluciones.size(); ++i) {
             int turno = listaSoluciones[i].getTurno();
             cantidadTiposTurnos[turno]++;
-        }
-        //Penalizamos los limites minimos y maximos de cada tipo de turno
-        //Turno 1: mañana
-        if (cantidadTiposTurnos[1] < instancia.getAsigPorTurno()[1][0] || cantidadTiposTurnos[1] > instancia.getAsigPorTurno()[1][1]) totalPenalidades += config.getValorPenalizacionDura();
-        //Turno 2: tarde
-        if (cantidadTiposTurnos[2] < instancia.getAsigPorTurno()[2][0] || cantidadTiposTurnos[2] > instancia.getAsigPorTurno()[2][1]) totalPenalidades += config.getValorPenalizacionDura();
-        //Turno 3: noche
-        if (cantidadTiposTurnos[3] < instancia.getAsigPorTurno()[3][0] || cantidadTiposTurnos[3] > instancia.getAsigPorTurno()[3][1]) totalPenalidades += config.getValorPenalizacionDura();
-        //Turno 4: descanso
-        if (cantidadTiposTurnos[4] < instancia.getAsigPorTurno()[4][0] || cantidadTiposTurnos[4] > instancia.getAsigPorTurno()[4][1]) totalPenalidades += config.getValorPenalizacionDura();
+        } // ------------------ PENALIZAR TOTAL, NO POR TRABAJADOR ------------------
+    }
+    //Penalizamos los limites minimos y maximos de cada tipo de turno
+    //Turno 1: mañana
+    if (cantidadTiposTurnos[1] < instancia.getAsigPorTurno()[1][0] || cantidadTiposTurnos[1] > instancia.getAsigPorTurno()[1][1]) totalPenalidades += config.getValorPenalizacionDura();
+    //Turno 2: tarde
+    if (cantidadTiposTurnos[2] < instancia.getAsigPorTurno()[2][0] || cantidadTiposTurnos[2] > instancia.getAsigPorTurno()[2][1]) totalPenalidades += config.getValorPenalizacionDura();
+    //Turno 3: noche
+    if (cantidadTiposTurnos[3] < instancia.getAsigPorTurno()[3][0] || cantidadTiposTurnos[3] > instancia.getAsigPorTurno()[3][1]) totalPenalidades += config.getValorPenalizacionDura();
+    //Turno 4: descanso
+    if (cantidadTiposTurnos[4] < instancia.getAsigPorTurno()[4][0] || cantidadTiposTurnos[4] > instancia.getAsigPorTurno()[4][1]) totalPenalidades += config.getValorPenalizacionDura();
+
+    cout << "Dura - Min y Max de turnos: " << totalPenalidades << endl;
+
+    //penalizar turnos (cantidad de dias consecutivos de trabajo)
+    for(it = solucion.begin(); it != solucion.end(); it++) {
+        //it->first es int, trabajador
+        //it->second es vector<Solucion>, soluciones
+        vector<Solucion> listaSoluciones = it->second; //Soluciones por trabajador
 
         int turnoManiana = 0;
         int turnoTarde = 0;
@@ -118,12 +156,13 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
 
         for (int i = 0; i < listaSoluciones.size(); ++i) {
             int turno = listaSoluciones[i].getTurno();
-
+            cout << "Dia: " << listaSoluciones[i].getDia() << endl;
+            
             //Contamos asignaciones consecutivas (en general)
             if (turno != 4) {
                 asignaciones++;
             } else {
-                if (asignaciones > 1) {
+                if (asignaciones > 0) {
                     asignacionesConsecutivas = (asignaciones > asignacionesConsecutivas) ? (asignaciones) : (asignacionesConsecutivas);
                 }
                 asignaciones = 0;
@@ -133,7 +172,7 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
             if (turno == 1) {
                 turnoManiana++;
             } else {
-                if (turnoManiana > 1) {
+                if (turnoManiana > 0) {
                     manianaConsecutiva = (turnoManiana > manianaConsecutiva) ? (turnoManiana) : (manianaConsecutiva);
                 }
                 turnoManiana = 0;
@@ -143,7 +182,7 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
             if (turno == 2) {
                 turnoTarde++;
             } else {
-                if (turnoTarde > 1) {
+                if (turnoTarde > 0) {
                     tardeConsecutiva = (turnoTarde > tardeConsecutiva) ? (turnoTarde) : (tardeConsecutiva);
                 }
                 turnoTarde = 0;
@@ -153,7 +192,7 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
             if (turno == 3) {
                 turnoNoche++;
             } else {
-                if (turnoNoche > 1) {
+                if (turnoNoche > 0) {
                     nocheConsecutiva = (turnoNoche > nocheConsecutiva) ? (turnoNoche) : (nocheConsecutiva);
                 }
                 turnoNoche = 0;
@@ -163,41 +202,48 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
             if (turno == 4) {
                 turnoLibre++;
             } else {
-                if (turnoLibre > 1) {
+                if (turnoLibre > 0) {
                     libreConsecutiva = (turnoLibre > libreConsecutiva) ? (turnoLibre) : (libreConsecutiva);
                 }
                 turnoLibre = 0;
             }
-
-            //Ahora, calculamos las penalidades
-            if (asignacionesConsecutivas < instancia.getMinAsignacionesConsecutivas() || asignacionesConsecutivas > instancia.getMaxAsignacionesConsecutivas())
-                totalPenalidades += config.getValorPenalizacionDura();
-            
-            if (manianaConsecutiva < instancia.getAsigConsecPorTurno()[1][0] || manianaConsecutiva > instancia.getAsigConsecPorTurno()[1][1])
-                totalPenalidades += config.getValorPenalizacionDura();
-            
-            if (tardeConsecutiva < instancia.getAsigConsecPorTurno()[2][0] || tardeConsecutiva > instancia.getAsigConsecPorTurno()[2][1])
-                totalPenalidades += config.getValorPenalizacionDura();
-            
-            if (nocheConsecutiva < instancia.getAsigConsecPorTurno()[3][0] || nocheConsecutiva > instancia.getAsigConsecPorTurno()[3][1])
-                totalPenalidades += config.getValorPenalizacionDura();
-            
-            if (libreConsecutiva < instancia.getAsigConsecPorTurno()[4][0] || libreConsecutiva > instancia.getAsigConsecPorTurno()[4][1])
-                totalPenalidades += config.getValorPenalizacionDura();
-            
         }
+
+        cout << "Trabajador " << it->first << ": asignacionesConsecutivas=" << asignacionesConsecutivas << endl;
+        cout << "Trabajador " << it->first << ": manianaConsecutivas=" << manianaConsecutiva << endl;
+        cout << "Trabajador " << it->first << ": tardeConsecutivas=" << tardeConsecutiva << endl;
+        cout << "Trabajador " << it->first << ": nocheConsecutivas=" << nocheConsecutiva << endl;
+        cout << "Trabajador " << it->first << ": libreConsecutivas=" << libreConsecutiva << endl;
+
+        //Ahora, calculamos las penalidades
+        if (asignacionesConsecutivas < instancia.getMinAsignacionesConsecutivas() || asignacionesConsecutivas > instancia.getMaxAsignacionesConsecutivas())
+            totalPenalidades += config.getValorPenalizacionDura();
+        
+        if (manianaConsecutiva < instancia.getAsigConsecPorTurno()[1][0] || manianaConsecutiva > instancia.getAsigConsecPorTurno()[1][1])
+            totalPenalidades += config.getValorPenalizacionDura();
+        
+        if (tardeConsecutiva < instancia.getAsigConsecPorTurno()[2][0] || tardeConsecutiva > instancia.getAsigConsecPorTurno()[2][1])
+            totalPenalidades += config.getValorPenalizacionDura();
+        
+        if (nocheConsecutiva < instancia.getAsigConsecPorTurno()[3][0] || nocheConsecutiva > instancia.getAsigConsecPorTurno()[3][1])
+            totalPenalidades += config.getValorPenalizacionDura();
+        
+        if (libreConsecutiva < instancia.getAsigConsecPorTurno()[4][0] || libreConsecutiva > instancia.getAsigConsecPorTurno()[4][1])
+            totalPenalidades += config.getValorPenalizacionDura();
+            
     }
+    cout << "Dura - Turnos grande: " << totalPenalidades << endl;
     return totalPenalidades;
 }
 
-Preferencia CalidadSolucion::getPreferencia(vector<Preferencia> listaPreferencias, int dia, int trabajador) {
+Preferencia CalidadSolucion::getPreferencia(vector<Preferencia> listaPreferencias, int dia, int trabajador, int turno) {
     for(int i = 0; i < listaPreferencias.size(); ++i) {
-        if (listaPreferencias[i].getTrabajador() == trabajador && listaPreferencias[i].getDia() == dia) return listaPreferencias[i];
+        if (listaPreferencias[i].getTrabajador() == trabajador && listaPreferencias[i].getDia() == dia && listaPreferencias[i].getTurno() == turno) return listaPreferencias[i];
     }
 }
 
-Solucion CalidadSolucion::getSolucion(vector<Solucion> listaSoluciones, int dia, int trabajador) {
+Solucion CalidadSolucion::getSolucion(vector<Solucion> listaSoluciones, int dia) {
     for(int i = 0; i < listaSoluciones.size(); ++i) {
-        if (listaSoluciones[i].getTrabajador() == trabajador && listaSoluciones[i].getDia() == dia) return listaSoluciones[i];
+        if (listaSoluciones[i].getDia() == dia) return listaSoluciones[i];
     }
 }
