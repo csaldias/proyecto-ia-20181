@@ -18,9 +18,9 @@ class Config {
             penalizacionDura = 1000;
             //Datos para Algoritmo
             temperaturaInicial = 100.0f;
-            temperaturaMinima = 10.0f;
-            tasaEnfriamiento = 0.5f;
-            numeroIteraciones = 10;
+            temperaturaMinima = 1.0f;
+            tasaEnfriamiento = 0.9f;
+            numeroIteraciones = 1000;
         }
         int getValorPenalizacionBlanda(void);
         int getValorPenalizacionDura(void);

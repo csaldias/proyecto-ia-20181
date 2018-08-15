@@ -15,7 +15,8 @@
 #include <map>
 #include <vector>
 #include <cstdlib>
-#include <ctime>
+#include <cstring>
+#include <string>
 
 using namespace std;
 
@@ -73,7 +74,7 @@ int main(int argc, char const *argv[])
 			//map<int, vector<Solucion> > nuevaSolucion = instancia.generarSolucion();
 
             int costoTotalNuevaSolucion = calidadSolucion.calcular(instancia, preferencias, nuevaSolucion);
-			std::cout << "Costo nueva solucion: " << costoTotalNuevaSolucion << endl;
+			//std::cout << "Costo nueva solucion: " << costoTotalNuevaSolucion << endl;
 
             float randomValue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
@@ -102,8 +103,23 @@ int main(int argc, char const *argv[])
 	std::cout << "Algoritmo terminado" << std::endl;
 	std::cout << "Total penalizaciones:" << costoMejorSolucion << std::endl;
 	std::cout << "Tiempo transcurrido:" << time_span.count() << " segundos." << std::endl;
-		
+
+	//Obtenemos el nombre del archivo de salida
+	//Formato: NXX-Y.out
+	//XX: Numero de Trabajadores de la instancia (nombre de la carpeta)
+	//Y: Numero de la instancia
+
+	vector<string> tokens;
+	char* pointer;
+	char* path = strdup(argv[2]);
+	pointer = strtok(path,"/.");
+	while(pointer != NULL) {
+		//tokens.push_back(pointer);
+		tokens.push_back(pointer);
+		pointer = strtok(NULL,"/.");
+	}
+	
 	//Imprimir a archivo mejor solucion
-	instancia.outputSolucion(mejorSolucion, "1");
+	instancia.outputSolucion(mejorSolucion, tokens[1]+"-"+tokens[2]);
     return 0;
 }
