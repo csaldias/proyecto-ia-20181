@@ -1,7 +1,6 @@
 #include "nsp.h"
 #include "temperatura.h"
 #include "instancia.h"
-#include "trabajador.h"
 #include "solucion.h"
 #include "preferencia.h"
 #include "calidadSolucion.h"
