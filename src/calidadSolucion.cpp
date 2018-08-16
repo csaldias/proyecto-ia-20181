@@ -5,6 +5,7 @@
 #include "instancia.h"
 #include "demanda.h"
 #include "config.h"
+#include "puntaje.h"
 
 #include <map>
 #include <vector>
@@ -12,15 +13,23 @@
 
 using namespace std;
 
-int CalidadSolucion::calcular(Instancia instancia, map<int, vector<Preferencia> > preferencias, map<int, vector<Solucion> > solucion) {
-    int costoRestriccBlandas = calcularRestriccBlandas(instancia, preferencias, solucion);
-    int costoRestriccDuras = calcularRestriccDuras(instancia, solucion);
-    return costoRestriccBlandas + costoRestriccDuras;
+map<int, Puntaje> CalidadSolucion::calcular(Instancia instancia, map<int, vector<Preferencia> > preferencias, map<int, vector<Solucion> > solucion) {
+    map<int, Puntaje> puntajesTotales;
+    map<int, Puntaje> costoRestriccBlandas = calcularRestriccBlandas(instancia, preferencias, solucion);
+    map<int, Puntaje> costoRestriccDuras = calcularRestriccDuras(instancia, solucion);
+
+    for(int i = 0; i <= instancia.getCantTrabajadores(); i++) {
+        puntajesTotales[i].setPuntaje(costoRestriccBlandas[i].getPuntaje()+costoRestriccDuras[i].getPuntaje());
+        puntajesTotales[i].setCantRestricciones(costoRestriccBlandas[i].getCantRestricciones()+costoRestriccDuras[i].getCantRestricciones());
+    }
+    //return costoRestriccBlandas + costoRestriccDuras;
+    return puntajesTotales;
 }
 
-int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vector<Preferencia> > preferencias, map<int, vector<Solucion> > solucion) {
+map<int, Puntaje> CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vector<Preferencia> > preferencias, map<int, vector<Solucion> > solucion) {
     Config config;
     int totalPenalidades = 0;
+    map<int, Puntaje> puntajes;
 
     //Penalizar preferencias
     for(int dia = 1; dia <= instancia.getCantDias(); dia++) {
@@ -33,7 +42,11 @@ int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vecto
             vector<Solucion> listaSoluciones = it->second; //Soluciones por trabador
             Solucion solucion = getSolucion(listaSoluciones, dia);
             Preferencia preferencia = getPreferencia(listaPreferencias, dia, it->first, solucion.getTurno());
-            totalPenalidades += preferencia.getPeso();
+            //totalPenalidades += preferencia.getPeso();
+            puntajes[trabador].addPuntaje(preferencia.getPeso());
+            //puntajes[trabador].addRestricciones(1);
+            puntajes[0].addPuntaje(preferencia.getPeso());
+            //puntajes[0].addRestricciones(1);
         }
     }
 
@@ -48,16 +61,23 @@ int CalidadSolucion::calcularRestriccBlandas(Instancia instancia, map<int, vecto
         for (int i = 0; i < listaSoluciones.size(); ++i) {
             if (listaSoluciones[i].getTurno() != 4) cantidadTurnosTrabajo++;
         }
-        if (cantidadTurnosTrabajo < instancia.getMinAsignaciones() || cantidadTurnosTrabajo > instancia.getMaxAsignaciones())
-            totalPenalidades += config.getValorPenalizacionBlanda();
+        if (cantidadTurnosTrabajo < instancia.getMinAsignaciones() || cantidadTurnosTrabajo > instancia.getMaxAsignaciones()) {
+            //totalPenalidades += config.getValorPenalizacionBlanda();
+            puntajes[it->first].addPuntaje(config.getValorPenalizacionBlanda());
+            puntajes[it->first].addRestricciones(1);
+            puntajes[0].addPuntaje(config.getValorPenalizacionBlanda());
+            puntajes[0].addRestricciones(1);
+        }
     }
 
-    return totalPenalidades;
+    //return totalPenalidades;
+    return puntajes;
 }
 
-int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<Solucion> > solucion) {
+map<int, Puntaje> CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<Solucion> > solucion) {
     Config config;
     int totalPenalidades = 0;
+    map<int, Puntaje> puntajes;
     
     map<int, vector<Solucion> >::iterator it;
     vector<Solucion>::iterator it2;
@@ -78,7 +98,13 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
                 }
             }
 
-            if (demandaEsperada > oferta) totalPenalidades += config.getValorPenalizacionDura() * (demandaEsperada - oferta);
+            if (demandaEsperada > oferta) {
+                totalPenalidades += config.getValorPenalizacionDura() * (demandaEsperada - oferta);
+                //puntajes[it->first].addPuntaje(config.getValorPenalizacionDura() * (demandaEsperada - oferta));
+                //puntajes[it->first].addRestricciones(1);
+                puntajes[0].addPuntaje(config.getValorPenalizacionDura() * (demandaEsperada - oferta));
+                puntajes[0].addRestricciones(1);
+            }
         }
     }
     
@@ -92,9 +118,13 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
             int turnoActual = listaSoluciones[i].getTurno();
             if ((turnoAnterior != 0) && (turnoAnterior != turnoActual)) {
                 //Penalizamos el día
-                if (turnoActual == 2 && turnoAnterior == 3) totalPenalidades += config.getValorPenalizacionDura();
-                if (turnoActual == 1 && turnoAnterior == 3) totalPenalidades += config.getValorPenalizacionDura();
-                if (turnoActual == 1 && turnoAnterior == 2) totalPenalidades += config.getValorPenalizacionDura();
+                if ((turnoActual == 2 && turnoAnterior == 3) || (turnoActual == 1 && turnoAnterior == 3) || (turnoActual == 1 && turnoAnterior == 2)) {
+                    //totalPenalidades += config.getValorPenalizacionDura();
+                    puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+                    puntajes[it->first].addRestricciones(1);
+                    puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+                    puntajes[0].addRestricciones(1);
+                }
             }
             turnoAnterior = turnoActual;
         }
@@ -119,13 +149,37 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
     }
     //Penalizamos los limites minimos y maximos de cada tipo de turno
     //Turno 1: mañana
-    if (cantidadTiposTurnos[1] < instancia.getAsigPorTurno()[1][0] || cantidadTiposTurnos[1] > instancia.getAsigPorTurno()[1][1]) totalPenalidades += config.getValorPenalizacionDura();
+    if (cantidadTiposTurnos[1] < instancia.getAsigPorTurno()[1][0] || cantidadTiposTurnos[1] > instancia.getAsigPorTurno()[1][1]) {
+        //totalPenalidades += config.getValorPenalizacionDura();
+        //puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+        //puntajes[it->first].addRestricciones(1);
+        puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+        puntajes[0].addRestricciones(1);
+    }
     //Turno 2: tarde
-    if (cantidadTiposTurnos[2] < instancia.getAsigPorTurno()[2][0] || cantidadTiposTurnos[2] > instancia.getAsigPorTurno()[2][1]) totalPenalidades += config.getValorPenalizacionDura();
+    if (cantidadTiposTurnos[2] < instancia.getAsigPorTurno()[2][0] || cantidadTiposTurnos[2] > instancia.getAsigPorTurno()[2][1]) {
+        //totalPenalidades += config.getValorPenalizacionDura();
+        //puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+        //puntajes[it->first].addRestricciones(1);
+        puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+        puntajes[0].addRestricciones(1);
+    }
     //Turno 3: noche
-    if (cantidadTiposTurnos[3] < instancia.getAsigPorTurno()[3][0] || cantidadTiposTurnos[3] > instancia.getAsigPorTurno()[3][1]) totalPenalidades += config.getValorPenalizacionDura();
+    if (cantidadTiposTurnos[3] < instancia.getAsigPorTurno()[3][0] || cantidadTiposTurnos[3] > instancia.getAsigPorTurno()[3][1]) {
+        //totalPenalidades += config.getValorPenalizacionDura();
+        //puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+        //puntajes[it->first].addRestricciones(1);
+        puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+        puntajes[0].addRestricciones(1);
+    }
     //Turno 4: descanso
-    if (cantidadTiposTurnos[4] < instancia.getAsigPorTurno()[4][0] || cantidadTiposTurnos[4] > instancia.getAsigPorTurno()[4][1]) totalPenalidades += config.getValorPenalizacionDura();
+    if (cantidadTiposTurnos[4] < instancia.getAsigPorTurno()[4][0] || cantidadTiposTurnos[4] > instancia.getAsigPorTurno()[4][1]) {
+        //totalPenalidades += config.getValorPenalizacionDura();
+        //puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+        //puntajes[it->first].addRestricciones(1);
+        puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+        puntajes[0].addRestricciones(1);
+    }
 
     //penalizar turnos (cantidad de dias consecutivos de trabajo)
     for(it = solucion.begin(); it != solucion.end(); it++) {
@@ -199,23 +253,48 @@ int CalidadSolucion::calcularRestriccDuras(Instancia instancia, map<int, vector<
         }
 
         //Ahora, calculamos las penalidades
-        if (asignacionesConsecutivas < instancia.getMinAsignacionesConsecutivas() || asignacionesConsecutivas > instancia.getMaxAsignacionesConsecutivas())
-            totalPenalidades += config.getValorPenalizacionDura();
+        if (asignacionesConsecutivas < instancia.getMinAsignacionesConsecutivas() || asignacionesConsecutivas > instancia.getMaxAsignacionesConsecutivas()) {
+            //totalPenalidades += config.getValorPenalizacionDura();
+            puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[it->first].addRestricciones(1);
+            puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[0].addRestricciones(1);
+        }
         
-        if (manianaConsecutiva < instancia.getAsigConsecPorTurno()[1][0] || manianaConsecutiva > instancia.getAsigConsecPorTurno()[1][1])
-            totalPenalidades += config.getValorPenalizacionDura();
+        if (manianaConsecutiva < instancia.getAsigConsecPorTurno()[1][0] || manianaConsecutiva > instancia.getAsigConsecPorTurno()[1][1]) {
+            //totalPenalidades += config.getValorPenalizacionDura();
+            puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[it->first].addRestricciones(1);
+            puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[0].addRestricciones(1);
+        }
         
-        if (tardeConsecutiva < instancia.getAsigConsecPorTurno()[2][0] || tardeConsecutiva > instancia.getAsigConsecPorTurno()[2][1])
-            totalPenalidades += config.getValorPenalizacionDura();
+        if (tardeConsecutiva < instancia.getAsigConsecPorTurno()[2][0] || tardeConsecutiva > instancia.getAsigConsecPorTurno()[2][1]) {
+            //totalPenalidades += config.getValorPenalizacionDura();
+            puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[it->first].addRestricciones(1);
+            puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[0].addRestricciones(1);
+        }
         
-        if (nocheConsecutiva < instancia.getAsigConsecPorTurno()[3][0] || nocheConsecutiva > instancia.getAsigConsecPorTurno()[3][1])
-            totalPenalidades += config.getValorPenalizacionDura();
+        if (nocheConsecutiva < instancia.getAsigConsecPorTurno()[3][0] || nocheConsecutiva > instancia.getAsigConsecPorTurno()[3][1]) {
+            //totalPenalidades += config.getValorPenalizacionDura();
+            puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[it->first].addRestricciones(1);
+            puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[0].addRestricciones(1);
+        }
         
-        if (libreConsecutiva < instancia.getAsigConsecPorTurno()[4][0] || libreConsecutiva > instancia.getAsigConsecPorTurno()[4][1])
-            totalPenalidades += config.getValorPenalizacionDura();
+        if (libreConsecutiva < instancia.getAsigConsecPorTurno()[4][0] || libreConsecutiva > instancia.getAsigConsecPorTurno()[4][1]) {
+            //totalPenalidades += config.getValorPenalizacionDura();
+            puntajes[it->first].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[it->first].addRestricciones(1);
+            puntajes[0].addPuntaje(config.getValorPenalizacionDura());
+            puntajes[0].addRestricciones(1);
+        }
             
     }
-    return totalPenalidades;
+    return puntajes;
 }
 
 Preferencia CalidadSolucion::getPreferencia(vector<Preferencia> listaPreferencias, int dia, int trabajador, int turno) {

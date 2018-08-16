@@ -7,6 +7,7 @@
 #include "calidadSolucion.h"
 #include "config.h"
 #include "sa.h"
+#include "puntaje.h"
 
 #include <iostream>
 #include <ctime>
@@ -44,7 +45,7 @@ int main(int argc, char const *argv[])
     
 	//Trabajador-Solucion
 	map<int, vector<Solucion> > solucion = instancia.generarSolucion();
-	int costoTotal = calidadSolucion.calcular(instancia, preferencias, solucion);
+	int costoTotal = calidadSolucion.calcular(instancia, preferencias, solucion)[0].getPuntaje();
 	std::cout << "Costo de Solucion Incial: " << costoTotal << endl;
 	
 	solucionActual = solucion;
@@ -68,7 +69,7 @@ int main(int argc, char const *argv[])
             //Trabajador-Solucion
 			map<int, vector<Solucion> > nuevaSolucion = instancia.variarSolucion(solucionActual);
 			//map<int, vector<Solucion> > nuevaSolucion = instancia.generarSolucion();
-            int costoTotalNuevaSolucion = calidadSolucion.calcular(instancia, preferencias, nuevaSolucion);
+            int costoTotalNuevaSolucion = calidadSolucion.calcular(instancia, preferencias, nuevaSolucion)[0].getPuntaje();
 
             float randomValue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
