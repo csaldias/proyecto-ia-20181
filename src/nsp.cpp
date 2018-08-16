@@ -37,16 +37,16 @@ int main(int argc, char const *argv[])
     map<int, vector<Preferencia> > preferencias = instancia.getPreferencias();
 	//Trabajador-Solucion
 	map<int, vector<Solucion> > mejorSolucion;
-	int costoMejorSolucion = 10000000;
+	map<int, Puntaje> costoMejorSolucion;
 
 	map<int, vector<Solucion> > solucionActual;
-	int costoSolucionActual = 10000000;
+	map<int, Puntaje> costoSolucionActual;
 		
     
 	//Trabajador-Solucion
 	map<int, vector<Solucion> > solucion = instancia.generarSolucion();
-	int costoTotal = calidadSolucion.calcular(instancia, preferencias, solucion)[0].getPuntaje();
-	std::cout << "Costo de Solucion Incial: " << costoTotal << endl;
+	map<int, Puntaje> costoTotal = calidadSolucion.calcular(instancia, preferencias, solucion);
+	std::cout << "Costo de Solucion Incial: " << costoTotal[0].getPuntaje() << endl;
 	
 	solucionActual = solucion;
 	costoSolucionActual = costoTotal;
@@ -69,21 +69,21 @@ int main(int argc, char const *argv[])
             //Trabajador-Solucion
 			map<int, vector<Solucion> > nuevaSolucion = instancia.variarSolucion(solucionActual);
 			//map<int, vector<Solucion> > nuevaSolucion = instancia.generarSolucion();
-            int costoTotalNuevaSolucion = calidadSolucion.calcular(instancia, preferencias, nuevaSolucion)[0].getPuntaje();
+            map<int, Puntaje> costoTotalNuevaSolucion = calidadSolucion.calcular(instancia, preferencias, nuevaSolucion);
 
             float randomValue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
-			if (costoTotalNuevaSolucion < costoSolucionActual) {
+			if (costoTotalNuevaSolucion[0].getPuntaje() < costoSolucionActual[0].getPuntaje()) {
 				//std::cout << "Costo reducido en " << costoSolucionActual - costoTotalNuevaSolucion << std::endl;
 				costoSolucionActual = costoTotalNuevaSolucion;
 				solucionActual = nuevaSolucion;
-			} else if (sa.probAceptacion(costoSolucionActual, costoTotalNuevaSolucion, temperaturaActual) > randomValue ){
+			} else if (sa.probAceptacion(costoSolucionActual[0].getPuntaje(), costoTotalNuevaSolucion[0].getPuntaje(), temperaturaActual) > randomValue ){
 				costoSolucionActual = costoTotalNuevaSolucion;
 				solucionActual = nuevaSolucion;
 			}
 
-			if (costoSolucionActual < costoMejorSolucion) {
-				std::cout << "Costo reducido en " << costoMejorSolucion - costoSolucionActual << std::endl;
+			if (costoSolucionActual[0].getPuntaje() < costoMejorSolucion[0].getPuntaje()) {
+				std::cout << "Puntaje reducido en " << costoMejorSolucion[0].getPuntaje() - costoSolucionActual[0].getPuntaje() << std::endl;
 				costoMejorSolucion = costoSolucionActual;
 				mejorSolucion = solucionActual;
 			}
@@ -98,7 +98,7 @@ int main(int argc, char const *argv[])
     chrono::duration<double> time_span = chrono::duration_cast< chrono::duration<double> >(fin - inicio);
 
 	std::cout << "Algoritmo terminado" << std::endl;
-	std::cout << "Total penalizaciones:" << costoMejorSolucion << std::endl;
+	std::cout << "Puntaje mejor solucion:" << costoMejorSolucion[0].getPuntaje() << std::endl;
 	std::cout << "Tiempo transcurrido:" << time_span.count() << " segundos." << std::endl;
 
 	//Obtenemos el nombre del archivo de salida
@@ -117,6 +117,6 @@ int main(int argc, char const *argv[])
 	}
 	
 	//Imprimir a archivo mejor solucion
-	instancia.outputSolucion(mejorSolucion, "output/"+tokens[1]+"-"+tokens[2]);
+	instancia.outputSolucion(mejorSolucion, costoMejorSolucion, "output/"+tokens[1]+"-"+tokens[2]);
     return 0;
 }

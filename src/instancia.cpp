@@ -194,7 +194,7 @@ string buscarAsignacion(map<int, vector<Solucion> > solucion, int trabajador, in
     return "-";
 }
 
-void Instancia::outputSolucion(map<int, vector<Solucion> > solucion, string nombre) {
+void Instancia::outputSolucion(map<int, vector<Solucion> > solucion, map<int, Puntaje> puntajes, string nombre) {
     //Abrimos el archivo de salida
     string pathOutputSolucion = nombre + ".out";
      cout << "Escribiendo solucion: " << pathOutputSolucion << endl;
@@ -228,6 +228,20 @@ void Instancia::outputSolucion(map<int, vector<Solucion> > solucion, string nomb
         }
         outFile << endl;
     }
+    outFile << endl;
+
+    for (int i = 0; i <= this->cantTrabajadores; i++) {
+        //Imprimimos la cantidad de restricciones violadas
+        //General primero [0], luego por cada trabajador
+        outFile << puntajes[i].getCantRestricciones() << " ";
+    }
+    outFile << endl;
+    for (int i = 0; i <= this->cantTrabajadores; i++) {
+        //Imprimimos el puntaje de la solución
+        //General primero [0], luego por cada trabajador
+        outFile << puntajes[i].getPuntaje() << " ";
+    }
+    outFile << endl;
     outFile.close();
 }
 

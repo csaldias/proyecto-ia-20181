@@ -4,6 +4,7 @@
 #include "preferencia.h"
 #include "demanda.h"
 #include "solucion.h"
+#include "puntaje.h"
 
 #include <vector>
 #include <map>
@@ -49,7 +50,7 @@ class Instancia {
 
         map<int, vector<Solucion> > generarSolucion();
         map<int, vector<Solucion> > variarSolucion(map<int, vector<Solucion> >);
-        void outputSolucion(map<int, vector<Solucion> > solucion, string nombre);
+        void outputSolucion(map<int, vector<Solucion> > solucion, map<int, Puntaje> puntajes, string nombre);
 };
 
 #endif
