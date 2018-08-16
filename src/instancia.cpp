@@ -249,29 +249,19 @@ map<int, vector<Solucion> > Instancia::variarSolucion(map<int, vector<Solucion> 
     //Hacemos una permutación en la solución
     //En este caso, cambiamos la asignación de 1 día aleatorio de 1 trabajador aleatorio.
 
-    //Elegimos a nuestros 2 trabajadores
-    int trabajador1 = (rand() % this->cantTrabajadores) + 1;
-    //int trabajador2 = (rand() % this->cantTrabajadores) + 1;
-    //while (trabajador1 == trabajador2) { //Nos aseguramos que sean distintos
-    //    trabajador2 = (rand() % this->cantTrabajadores) + 1;
-    //}
-
+    //Elegimos a nuestro trabajador, dia y turno
+    int trabajador = (rand() % this->cantTrabajadores) + 1;
     int dia = (rand() % this->cantDias) + 1;
     int nuevoTurno = (rand() % this->cantTurnos) + 1;
 
     map<int, vector<Solucion> > solMod = solucion;
-    //vector<Solucion> solTrab1;
-    //vector<Solucion> solTrab2;
+    
     vector<Solucion>::iterator it;
-    for (it = solMod[trabajador1].begin(); it != solMod[trabajador1].end(); it++) {
+    for (it = solMod[trabajador].begin(); it != solMod[trabajador].end(); it++) {
         if ((*it).getDia() == dia) {
             (*it).setTurno(nuevoTurno);
         }
     }
-    //solTrab2 = solMod[trabajador2];
-
-    //solMod[trabajador1] = solTrab2;
-    //solMod[trabajador2] = solTrab1;
 
     return solMod;
 }
