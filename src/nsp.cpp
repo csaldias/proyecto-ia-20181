@@ -1,4 +1,3 @@
-#include "nsp.h"
 #include "temperatura.h"
 #include "instancia.h"
 #include "solucion.h"
@@ -59,6 +58,7 @@ int main(int argc, char const *argv[])
 
     std::cout << "Temp Inicial: " << temperatura.getTemp() << ", Temp Minina: " << temperaturaMinima << endl;
 
+    int iteracionesTotales = 0;
     float temperaturaActual = temperatura.getTemp();
     while (temperaturaActual > temperaturaMinima) {
         std::cout << "---------- Temp Actual: " << temperaturaActual << " ----------" << endl;
@@ -66,7 +66,6 @@ int main(int argc, char const *argv[])
         while (iteraciones >= 1) {
             //Trabajador-Solucion
             map<int, vector<Solucion> > nuevaSolucion = instancia.variarSolucion(solucionActual);
-            //map<int, vector<Solucion> > nuevaSolucion = instancia.generarSolucion();
             map<int, Puntaje> costoTotalNuevaSolucion = calidadSolucion.calcular(instancia, preferencias, nuevaSolucion);
             
             float randomValue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
@@ -83,6 +82,9 @@ int main(int argc, char const *argv[])
                 costoMejorSolucion = costoSolucionActual;
                 mejorSolucion = solucionActual;
             }
+
+            //std::cout << iteracionesTotales << "," << costoMejorSolucion[0].getPuntaje() << endl;
+            iteracionesTotales++;
             iteraciones--;
         }
         temperatura.coolDown();
@@ -93,8 +95,9 @@ int main(int argc, char const *argv[])
     chrono::duration<double> time_span = chrono::duration_cast< chrono::duration<double> >(fin - inicio);
     
     std::cout << "Algoritmo terminado" << std::endl;
-    std::cout << "Puntaje mejor solucion:" << costoMejorSolucion[0].getPuntaje() << std::endl;
-    std::cout << "Tiempo transcurrido:" << time_span.count() << " segundos." << std::endl;
+    std::cout << " -> Puntaje mejor solucion:" << costoMejorSolucion[0].getPuntaje() << std::endl;
+    std::cout << " -> Tiempo transcurrido:" << time_span.count() << " segundos." << std::endl;
+    //std::cout << costoMejorSolucion[0].getPuntaje() << "," << time_span.count() << "," << costoMejorSolucion[0].getCantRestricciones() << endl;
     
     //Obtenemos el nombre del archivo de salida
     //Formato: NXX-Y.out

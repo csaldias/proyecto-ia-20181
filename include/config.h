@@ -20,7 +20,7 @@ class Config {
             temperaturaInicial = 100.0f;
             temperaturaMinima = 1.0f;
             tasaEnfriamiento = 0.9f;
-            numeroIteraciones = 2000;
+            numeroIteraciones = 200;
         }
         int getValorPenalizacionBlanda(void);
         int getValorPenalizacionDura(void);
