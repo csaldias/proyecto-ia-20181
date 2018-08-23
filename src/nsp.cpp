@@ -22,7 +22,7 @@ using namespace std;
 int main(int argc, char const *argv[])
 {
     chrono::high_resolution_clock::time_point inicio = chrono::high_resolution_clock::now();
-    srand(unsigned(time(0)));
+    srand(time(NULL));
 
     Instancia instancia;
     Config config;
@@ -67,7 +67,7 @@ int main(int argc, char const *argv[])
             //Trabajador-Solucion
             map<int, vector<Solucion> > nuevaSolucion = instancia.variarSolucion(solucionActual);
             map<int, Puntaje> costoTotalNuevaSolucion = calidadSolucion.calcular(instancia, preferencias, nuevaSolucion);
-            
+
             float randomValue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
             if (costoTotalNuevaSolucion[0].getPuntaje() < costoSolucionActual[0].getPuntaje()) {
                 costoSolucionActual = costoTotalNuevaSolucion;
@@ -76,7 +76,7 @@ int main(int argc, char const *argv[])
                 costoSolucionActual = costoTotalNuevaSolucion;
                 solucionActual = nuevaSolucion;
             }
-            
+
             if (costoSolucionActual[0].getPuntaje() < costoMejorSolucion[0].getPuntaje()) {
                 std::cout << "Puntaje reducido en " << costoMejorSolucion[0].getPuntaje() - costoSolucionActual[0].getPuntaje() << std::endl;
                 costoMejorSolucion = costoSolucionActual;
@@ -90,20 +90,20 @@ int main(int argc, char const *argv[])
         temperatura.coolDown();
         temperaturaActual = temperatura.getTemp();
     }
-    
+
     chrono::high_resolution_clock::time_point fin = chrono::high_resolution_clock::now();
     chrono::duration<double> time_span = chrono::duration_cast< chrono::duration<double> >(fin - inicio);
-    
+
     std::cout << "Algoritmo terminado" << std::endl;
     std::cout << " -> Puntaje mejor solucion:" << costoMejorSolucion[0].getPuntaje() << std::endl;
     std::cout << " -> Tiempo transcurrido:" << time_span.count() << " segundos." << std::endl;
     //std::cout << costoMejorSolucion[0].getPuntaje() << "," << time_span.count() << "," << costoMejorSolucion[0].getCantRestricciones() << endl;
-    
+
     //Obtenemos el nombre del archivo de salida
     //Formato: NXX-Y.out
     //XX: Numero de Trabajadores de la instancia (nombre de la carpeta)
     //Y: Numero de la instancia
-    
+
     vector<string> tokens;
     char* pointer;
     char* path = strdup(argv[2]);
@@ -112,7 +112,7 @@ int main(int argc, char const *argv[])
         tokens.push_back(pointer);
         pointer = strtok(NULL,"/.");
     }
-    
+
     //Imprimir a archivo mejor solucion
     instancia.outputSolucion(mejorSolucion, costoMejorSolucion, "output/"+tokens[1]+"-"+tokens[2]);
     return 0;

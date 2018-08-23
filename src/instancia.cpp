@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <cctype>
 #include <locale>
-#include <functional> 
+#include <functional>
 
 using namespace std;
 
@@ -58,10 +58,10 @@ using namespace std;
              this->asigConsecPorTurno[numeroLinea - 3].push_back(b);
          }
          numeroLinea++;
-         
+
      }
      genFile.close();
-     
+
      //Ahora, leemos el archivo .nsp
      cout << "Leyendo Archivo NSP: " << pathNspFile << endl;
      ifstream nspFile;
@@ -107,7 +107,7 @@ using namespace std;
                  this->matrizPreferencias[idTrabajador].push_back(Preferencia(idTrabajador, 4, dia, d));
              }
          }
-         numeroLinea++; 
+         numeroLinea++;
      }
      nspFile.close();
      cout << "Informacion cargada." << endl;
@@ -121,7 +121,7 @@ map<int, vector<Solucion> > Instancia::generarSolucion() {
     //cout << "generarSolucion: Obteniendo asignaciones..." << endl;
     // trabajador  {trabajador, dia, turno}
     map<int, vector<Solucion> > soluciones;
-    srand(unsigned(time(0)));
+    srand(time(NULL));
 
     for (int dia = 1; dia <= this->cantDias; dia++) {
         //Designar turnos por dia
@@ -217,14 +217,14 @@ void Instancia::outputSolucion(map<int, vector<Solucion> > solucion, map<int, Pu
         } else {
             outFile << trabajador << " ";
         }
-        
+
         vector<Solucion> asignaciones = solucion[trabajador];
         for (int dia = 1; dia <= this->cantDias; dia++) {
             //Imprimimos las asignaciones del trabajador por dia
             for (int turno = 1; turno <= this->cantTurnos; turno++) {
                 outFile << buscarAsignacion(solucion, trabajador, dia, turno) << "  ";
             }
-             
+
         }
         outFile << endl;
     }
@@ -255,7 +255,7 @@ map<int, vector<Solucion> > Instancia::variarSolucion(map<int, vector<Solucion> 
     int nuevoTurno = (rand() % this->cantTurnos) + 1;
 
     map<int, vector<Solucion> > solMod = solucion;
-    
+
     vector<Solucion>::iterator it;
     for (it = solMod[trabajador].begin(); it != solMod[trabajador].end(); it++) {
         if ((*it).getDia() == dia) {
